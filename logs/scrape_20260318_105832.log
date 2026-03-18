@@ -1,0 +1,62 @@
+2026-03-18 10:58:32,339 [INFO] root: Log file: logs/scrape_20260318_105832.log
+2026-03-18 10:58:32,340 [INFO] root: Spritmonitor.de Scraper starting …
+2026-03-18 10:58:32,340 [INFO] root: Mode: model
+2026-03-18 10:58:32,340 [INFO] root: Config: delay=1.0–3.0s, cache_ttl=7d, max_pages=50
+2026-03-18 10:58:32,340 [INFO] scraper.spider: ============================================================
+2026-03-18 10:58:32,340 [INFO] scraper.spider: MODE: model (make=Volkswagen, model=Golf, make_id=None)
+2026-03-18 10:58:32,340 [INFO] scraper.spider: ============================================================
+2026-03-18 10:58:32,342 [INFO] scraper.http_client: GET https://www.spritmonitor.de/en/  (attempt 1/3)
+2026-03-18 10:58:32,345 [DEBUG] urllib3.connectionpool: Starting new HTTPS connection (1): www.spritmonitor.de:443
+2026-03-18 10:58:32,819 [DEBUG] urllib3.connectionpool: https://www.spritmonitor.de:443 "GET /en/ HTTP/1.1" 200 None
+2026-03-18 10:58:32,858 [INFO] scraper.parser: Parsed 361 makes from page.
+2026-03-18 10:58:32,859 [INFO] scraper.spider: Processing make: Volkswagen (id=50)
+2026-03-18 10:58:32,859 [DEBUG] scraper.http_client: Rate-limit sleep 1.2s
+2026-03-18 10:58:34,083 [INFO] scraper.http_client: GET https://www.spritmonitor.de/en/ajaxModel.action?manuf=50&allowempty=false  (attempt 1/3)
+2026-03-18 10:58:34,197 [DEBUG] urllib3.connectionpool: https://www.spritmonitor.de:443 "GET /en/ajaxModel.action?manuf=50&allowempty=false HTTP/1.1" 200 None
+2026-03-18 10:58:34,198 [INFO] scraper.parser: Parsed 51 models for make_id=50 via AJAX.
+2026-03-18 10:58:34,198 [INFO] scraper.spider:   Model: Golf (id=452)
+2026-03-18 10:58:34,198 [DEBUG] scraper.http_client: Rate-limit sleep 1.9s
+2026-03-18 10:58:36,069 [INFO] scraper.http_client: GET https://www.spritmonitor.de/en/overview/50-Volkswagen/452-Golf.html  (attempt 1/3)
+2026-03-18 10:58:36,609 [DEBUG] urllib3.connectionpool: https://www.spritmonitor.de:443 "GET /en/overview/50-Volkswagen/452-Golf.html HTTP/1.1" 200 None
+2026-03-18 10:58:36,650 [DEBUG] scraper.parser: Parsed 0 vehicle entries from page.
+2026-03-18 10:58:36,713 [INFO] scraper.spider:     Pagination: 10 pages detected.
+2026-03-18 10:58:36,713 [DEBUG] scraper.http_client: Rate-limit sleep 1.1s
+2026-03-18 10:58:37,843 [INFO] scraper.http_client: GET https://www.spritmonitor.de/en/overview/50-Volkswagen/452-Golf.html?page=2  (attempt 1/3)
+2026-03-18 10:58:38,381 [DEBUG] urllib3.connectionpool: https://www.spritmonitor.de:443 "GET /en/overview/50-Volkswagen/452-Golf.html?page=2 HTTP/1.1" 200 None
+2026-03-18 10:58:38,421 [DEBUG] scraper.parser: Parsed 0 vehicle entries from page.
+2026-03-18 10:58:38,421 [DEBUG] scraper.spider:     No vehicles on page 2 — stopping.
+2026-03-18 10:58:38,421 [INFO] scraper.spider:   No vehicle data found for Volkswagen Golf.
+2026-03-18 10:58:38,421 [INFO] scraper.spider:   Model: Golf Plus (id=957)
+2026-03-18 10:58:38,422 [DEBUG] scraper.http_client: Rate-limit sleep 1.1s
+2026-03-18 10:58:39,570 [INFO] scraper.http_client: GET https://www.spritmonitor.de/en/overview/50-Volkswagen/957-Golf_Plus.html  (attempt 1/3)
+2026-03-18 10:58:39,722 [DEBUG] urllib3.connectionpool: https://www.spritmonitor.de:443 "GET /en/overview/50-Volkswagen/957-Golf_Plus.html HTTP/1.1" 200 None
+2026-03-18 10:58:39,775 [DEBUG] scraper.parser: Parsed 0 vehicle entries from page.
+2026-03-18 10:58:39,842 [INFO] scraper.spider:     Pagination: 10 pages detected.
+2026-03-18 10:58:39,843 [DEBUG] scraper.http_client: Rate-limit sleep 1.2s
+2026-03-18 10:58:41,078 [INFO] scraper.http_client: GET https://www.spritmonitor.de/en/overview/50-Volkswagen/957-Golf_Plus.html?page=2  (attempt 1/3)
+2026-03-18 10:58:41,237 [DEBUG] urllib3.connectionpool: https://www.spritmonitor.de:443 "GET /en/overview/50-Volkswagen/957-Golf_Plus.html?page=2 HTTP/1.1" 200 None
+2026-03-18 10:58:41,276 [DEBUG] scraper.parser: Parsed 0 vehicle entries from page.
+2026-03-18 10:58:41,276 [DEBUG] scraper.spider:     No vehicles on page 2 — stopping.
+2026-03-18 10:58:41,276 [INFO] scraper.spider:   No vehicle data found for Volkswagen Golf Plus.
+2026-03-18 10:58:41,276 [INFO] scraper.spider:   Model: Golf Sportsvan (id=1377)
+2026-03-18 10:58:41,276 [DEBUG] scraper.http_client: Rate-limit sleep 2.1s
+2026-03-18 10:58:43,399 [INFO] scraper.http_client: GET https://www.spritmonitor.de/en/overview/50-Volkswagen/1377-Golf_Sportsvan.html  (attempt 1/3)
+2026-03-18 10:58:43,543 [DEBUG] urllib3.connectionpool: https://www.spritmonitor.de:443 "GET /en/overview/50-Volkswagen/1377-Golf_Sportsvan.html HTTP/1.1" 200 None
+2026-03-18 10:58:43,625 [DEBUG] scraper.parser: Parsed 0 vehicle entries from page.
+2026-03-18 10:58:43,725 [INFO] scraper.spider:     Pagination: 10 pages detected.
+2026-03-18 10:58:43,725 [DEBUG] scraper.http_client: Rate-limit sleep 2.8s
+2026-03-18 10:58:46,538 [INFO] scraper.http_client: GET https://www.spritmonitor.de/en/overview/50-Volkswagen/1377-Golf_Sportsvan.html?page=2  (attempt 1/3)
+2026-03-18 10:58:46,703 [DEBUG] urllib3.connectionpool: https://www.spritmonitor.de:443 "GET /en/overview/50-Volkswagen/1377-Golf_Sportsvan.html?page=2 HTTP/1.1" 200 None
+2026-03-18 10:58:46,742 [DEBUG] scraper.parser: Parsed 0 vehicle entries from page.
+2026-03-18 10:58:46,742 [DEBUG] scraper.spider:     No vehicles on page 2 — stopping.
+2026-03-18 10:58:46,742 [INFO] scraper.spider:   No vehicle data found for Volkswagen Golf Sportsvan.
+2026-03-18 10:58:46,743 [INFO] scraper.storage: Saving 0 records to output files …
+2026-03-18 10:58:46,743 [INFO] scraper.storage: CSV:  output/spritmonitor_model_20260318.csv  (0 rows)
+2026-03-18 10:58:46,743 [INFO] scraper.storage: JSON: output/spritmonitor_model_20260318.json
+2026-03-18 10:58:46,743 [INFO] scraper.spider: ============================================================
+2026-03-18 10:58:46,743 [INFO] scraper.spider: SCRAPING COMPLETE
+2026-03-18 10:58:46,743 [INFO] scraper.spider:   Total records:   0
+2026-03-18 10:58:46,744 [INFO] scraper.spider:   HTTP requests:   8
+2026-03-18 10:58:46,744 [INFO] scraper.spider:   Elapsed time:    0.2 minutes
+2026-03-18 10:58:46,744 [INFO] scraper.spider:   Progress stats:  {'completed_makes': [], 'completed_models': [], 'current_make': None, 'current_model': None, 'total_makes': 0, 'total_models': 0, 'total_records': 0, 'errors': 0}
+2026-03-18 10:58:46,744 [INFO] scraper.spider: ============================================================

@@ -1,0 +1,34 @@
+2026-03-18 08:35:45,160 [INFO] root: Log file: logs/scrape_20260318_083545.log
+2026-03-18 08:35:45,160 [INFO] root: Spritmonitor.de Scraper starting …
+2026-03-18 08:35:45,160 [INFO] root: Mode: model
+2026-03-18 08:35:45,160 [INFO] root: Config: delay=1.0–3.0s, cache_ttl=7d, max_pages=50
+2026-03-18 08:35:45,161 [INFO] scraper.spider: ============================================================
+2026-03-18 08:35:45,161 [INFO] scraper.spider: MODE: model (make=Volkswagen, model=Golf, make_id=None)
+2026-03-18 08:35:45,161 [INFO] scraper.spider: ============================================================
+2026-03-18 08:35:45,162 [INFO] scraper.http_client: GET https://www.spritmonitor.de/en/  (attempt 1/3)
+2026-03-18 08:35:45,164 [DEBUG] urllib3.connectionpool: Starting new HTTPS connection (1): www.spritmonitor.de:443
+2026-03-18 08:35:45,734 [DEBUG] urllib3.connectionpool: https://www.spritmonitor.de:443 "GET /en/ HTTP/1.1" 200 None
+2026-03-18 08:35:45,776 [INFO] scraper.parser: Parsed 361 makes from overview page.
+2026-03-18 08:35:45,777 [INFO] scraper.spider: Processing make: Volkswagen (id=50)
+2026-03-18 08:35:45,777 [DEBUG] scraper.http_client: Rate-limit sleep 2.8s
+2026-03-18 08:35:48,543 [INFO] scraper.http_client: GET https://www.spritmonitor.de/en/overview/50-Volkswagen.html  (attempt 1/3)
+2026-03-18 08:35:48,659 [DEBUG] urllib3.connectionpool: https://www.spritmonitor.de:443 "GET /en/overview/50-Volkswagen.html HTTP/1.1" 404 None
+2026-03-18 08:35:48,659 [WARNING] scraper.http_client: HTTP 404 for https://www.spritmonitor.de/en/overview/50-Volkswagen.html (attempt 1)
+2026-03-18 08:35:50,660 [INFO] scraper.http_client: GET https://www.spritmonitor.de/en/overview/50-Volkswagen.html  (attempt 2/3)
+2026-03-18 08:35:50,775 [DEBUG] urllib3.connectionpool: https://www.spritmonitor.de:443 "GET /en/overview/50-Volkswagen.html HTTP/1.1" 404 None
+2026-03-18 08:35:50,775 [WARNING] scraper.http_client: HTTP 404 for https://www.spritmonitor.de/en/overview/50-Volkswagen.html (attempt 2)
+2026-03-18 08:35:54,776 [INFO] scraper.http_client: GET https://www.spritmonitor.de/en/overview/50-Volkswagen.html  (attempt 3/3)
+2026-03-18 08:35:54,889 [DEBUG] urllib3.connectionpool: https://www.spritmonitor.de:443 "GET /en/overview/50-Volkswagen.html HTTP/1.1" 404 None
+2026-03-18 08:35:54,890 [WARNING] scraper.http_client: HTTP 404 for https://www.spritmonitor.de/en/overview/50-Volkswagen.html (attempt 3)
+2026-03-18 08:36:02,890 [ERROR] scraper.http_client: All 3 attempts failed for https://www.spritmonitor.de/en/overview/50-Volkswagen.html
+2026-03-18 08:36:02,890 [WARNING] scraper.spider: No matching models found.
+2026-03-18 08:36:02,891 [INFO] scraper.storage: Saving 0 records to output files …
+2026-03-18 08:36:02,891 [INFO] scraper.storage: CSV:  output/spritmonitor_model_20260318.csv  (0 rows)
+2026-03-18 08:36:02,891 [INFO] scraper.storage: JSON: output/spritmonitor_model_20260318.json
+2026-03-18 08:36:02,891 [INFO] scraper.spider: ============================================================
+2026-03-18 08:36:02,891 [INFO] scraper.spider: SCRAPING COMPLETE
+2026-03-18 08:36:02,891 [INFO] scraper.spider:   Total records:    0
+2026-03-18 08:36:02,891 [INFO] scraper.spider:   HTTP requests:    4
+2026-03-18 08:36:02,891 [INFO] scraper.spider:   Elapsed time:     0.3 minutes
+2026-03-18 08:36:02,892 [INFO] scraper.spider:   Progress stats:   {'completed_makes': [], 'completed_models': [], 'current_make': None, 'current_model': None, 'total_makes': 0, 'total_models': 0, 'total_records': 0, 'errors': 0}
+2026-03-18 08:36:02,892 [INFO] scraper.spider: ============================================================
