@@ -30,9 +30,14 @@ _RE_POWER_PS = re.compile(r"(\d+)\s*(?:PS|hp|bhp)", re.I)
 _RE_CCM = re.compile(r"(\d{3,5})\s*(?:ccm|cm³|cc)", re.I)
 _RE_YEAR = re.compile(r"\b(19\d{2}|20\d{2})\b")
 _RE_PAGINATION = re.compile(r"[?&]page=(\d+)")
-_RE_COUNT = re.compile(r"([\d.,]+)\s*(?:vehicles?|Fahrzeuge?|entries?|results?)", re.I)
+_RE_COUNT = re.compile(
+    r"([\d.,]+)\s*(?:vehicles?|Fahrzeuge?|entries?|results?)", re.I
+)
 
-# Engine pattern: tries to capture e.g. "1.5 TSI", "2.0 TDI", "e-tron 55"
+# ── tooltip helpers (Spritmonitor puts units in onmouseover) ──────────
+_RE_TOOLTIP = re.compile(r"showTooltip\('([^']+)'\)")
+
+# Engine pattern
 _RE_ENGINE = re.compile(
     r"\b(\d[.,]\d\s*(?:TSI|TFSI|TDI|CDI|HDi|dCi|BlueHDi|CDTI|JTD|"
     r"CRDI|MPI|GDI|T-GDI|FSI|GTI|GTD|GTE|MHEV|PHEV|EV|"
@@ -44,6 +49,53 @@ _RE_ENGINE = re.compile(
     re.I,
 )
 
+
+# ══════════════════════════════════════════════════════════════════════
+# Tooltip extraction helpers
+# ══════════════════════════════════════════════════════════════════════
+
+def _extract_tooltip_text(element: Tag) -> str | None:
+    """Extract the string argument from ``showTooltip('...')``."""
+    tooltip = element.get("onmouseover", "")
+    m = _RE_TOOLTIP.search(tooltip)
+    return m.group(1) if m else None
+
+
+def _extract_consumption_from_tooltips(
+    element: Tag,
+) -> tuple[float | None, str | None]:
+    """
+    Search *element* and its descendants for an ``onmouseover`` tooltip
+    that contains a consumption value with unit.
+    Returns ``(value, unit)`` or ``(None, None)``.
+    """
+    candidates = [element]
+    candidates.extend(element.find_all(attrs={"onmouseover": True}))
+    for el in candidates:
+        tip = _extract_tooltip_text(el)
+        if tip:
+            cm = _RE_CONSUMPTION.search(tip)
+            if cm:
+                return _parse_float(cm.group(1)), cm.group(2).strip()
+    return None, None
+
+
+def _extract_fuelings_from_tooltips(element: Tag) -> int | None:
+    """
+    Search *element* and its descendants for an ``onmouseover`` tooltip
+    that contains a fuelings count (e.g. ``'5 Fuelings'``).
+    """
+    candidates = [element]
+    candidates.extend(element.find_all(attrs={"onmouseover": True}))
+    for el in candidates:
+        tip = _extract_tooltip_text(el)
+        if tip:
+            fm = re.search(r"(\d+)\s*Fueling", tip, re.I)
+            if fm:
+                return int(fm.group(1))
+    return None
+
+
 # ══════════════════════════════════════════════════════════════════════
 # 1. Parse list of makes from the homepage
 # ══════════════════════════════════════════════════════════════════════
@@ -51,20 +103,15 @@ _RE_ENGINE = re.compile(
 def parse_makes(html: str) -> list[dict[str, Any]]:
     """
     Return ``[{make_id, make_name, make_slug, url}, ...]``
-    from the main homepage (https://www.spritmonitor.de/en/).
-
-    Primary strategy: parse the ``<select id="manuf">`` dropdown.
-    Fallback: links whose href matches the make overview pattern.
+    from the homepage ``<select id="manuf">``.
     """
     soup = BeautifulSoup(html, "lxml")
     makes: list[dict[str, Any]] = []
     seen_ids: set[int] = set()
 
-    # ── Strategy A (primary): <select> / <option> for manufacturer ──
-    #    The homepage has <select name="manuf" id="manuf"> with all makes.
+    # Strategy A: <select> for manufacturer (id="manuf")
     for select in soup.find_all("select"):
         select_id = (select.get("id") or select.get("name") or "").lower()
-        # CHANGED: added "manuf" to match <select id="manuf">
         if any(k in select_id for k in (
             "manuf", "make", "manufacturer", "hersteller", "marke",
         )):
@@ -76,18 +123,14 @@ def parse_makes(html: str) -> list[dict[str, Any]]:
                         seen_ids.add(mid)
                         name = opt.get_text(strip=True)
                         slug = _slugify(name)
-                        makes.append(
-                            {
-                                "make_id": mid,
-                                "make_name": name,
-                                "make_slug": slug,
-                                # Reference only — make-level overview
-                                # pages do not exist on Spritmonitor.
-                                "url": f"/en/overview/{mid}-{slug}.html",
-                            }
-                        )
+                        makes.append({
+                            "make_id": mid,
+                            "make_name": name,
+                            "make_slug": slug,
+                            "url": f"/en/overview/{mid}-{slug}.html",
+                        })
 
-    # ── Strategy B (fallback): links whose href matches the pattern ──
+    # Strategy B: links matching the make URL pattern
     if not makes:
         for a_tag in soup.find_all("a", href=_RE_MAKE_HREF):
             m = _RE_MAKE_HREF.search(a_tag["href"])
@@ -97,28 +140,24 @@ def parse_makes(html: str) -> list[dict[str, Any]]:
             if make_id == 0 or make_id in seen_ids:
                 continue
             seen_ids.add(make_id)
-            makes.append(
-                {
-                    "make_id": make_id,
-                    "make_name": a_tag.get_text(strip=True),
-                    "make_slug": m.group(2),
-                    "url": a_tag["href"],
-                }
-            )
+            makes.append({
+                "make_id": make_id,
+                "make_name": a_tag.get_text(strip=True),
+                "make_slug": m.group(2),
+                "url": a_tag["href"],
+            })
 
     if not makes:
         log.warning(
-            "Could not parse any makes from the page. "
-            "The HTML structure may have changed."
+            "Could not parse any makes. HTML structure may have changed."
         )
     else:
         log.info("Parsed %d makes from page.", len(makes))
-
     return makes
 
 
 # ══════════════════════════════════════════════════════════════════════
-# 2a. Parse models from AJAX response  (NEW — primary approach)
+# 2a. Parse models from AJAX response
 # ══════════════════════════════════════════════════════════════════════
 
 def parse_models_ajax(
@@ -127,33 +166,24 @@ def parse_models_ajax(
     make_slug: str = "",
 ) -> list[dict[str, Any]]:
     """
-    Parse the semicolon-separated response from Spritmonitor's AJAX
-    endpoint ``/en/ajaxModel.action?manuf={make_id}&allowempty=false``.
+    Parse the semicolon-separated CSV returned by
+    ``/en/ajaxModel.action?manuf={id}&allowempty=false``.
 
-    Response format: ``"1106,181;1988,914-4;1321,Amarok;452,Golf;"``
-    Each entry is ``model_id,model_name`` separated by semicolons.
-
-    Returns ``[{model_id, model_name, model_slug, url}, ...]``.
+    Format: ``"1106,181;1988,914-4;452,Golf;"``
     """
     models: list[dict[str, Any]] = []
     seen_ids: set[int] = set()
-
-    # Strip whitespace; the response may have a trailing semicolon
     text = response_text.strip()
     if not text:
-        log.warning(
-            "Empty AJAX response for make_id=%d.", make_id,
-        )
         return models
 
-    # ── Try CSV format first: "id,name;id,name;…" ────────────────
-    entries = text.split(";")
+    # Primary: CSV  "id,name;id,name;…"
     parsed_any = False
-    for entry in entries:
+    for entry in text.split(";"):
         entry = entry.strip()
         if not entry:
             continue
-        parts = entry.split(",", 1)  # split on FIRST comma only
+        parts = entry.split(",", 1)
         if len(parts) != 2:
             continue
         raw_id, raw_name = parts[0].strip(), parts[1].strip()
@@ -161,32 +191,26 @@ def parse_models_ajax(
             mid = int(raw_id)
         except ValueError:
             continue
-        if mid <= 0 or mid in seen_ids:
-            continue
-        if not raw_name:
+        if mid <= 0 or mid in seen_ids or not raw_name:
             continue
         seen_ids.add(mid)
         parsed_any = True
         slug = _slugify(raw_name)
-        models.append(
-            {
-                "model_id": mid,
-                "model_name": raw_name,
-                "model_slug": slug,
-                "url": f"/en/overview/{make_id}-{make_slug}/{mid}-{slug}.html",
-            }
-        )
+        models.append({
+            "model_id": mid,
+            "model_name": raw_name,
+            "model_slug": slug,
+            "url": f"/en/overview/{make_id}-{make_slug}/{mid}-{slug}.html",
+        })
 
-    # ── Fallback: maybe the response is HTML with <option> tags ──
+    # Fallback: HTML <option> tags
     if not parsed_any:
         soup = BeautifulSoup(text, "lxml")
         for opt in soup.find_all("option"):
             val = opt.get("value", "")
-            if not val:
-                continue
             try:
                 mid = int(val)
-            except ValueError:
+            except (ValueError, TypeError):
                 continue
             if mid <= 0 or mid in seen_ids:
                 continue
@@ -195,46 +219,31 @@ def parse_models_ajax(
                 continue
             seen_ids.add(mid)
             slug = _slugify(name)
-            models.append(
-                {
-                    "model_id": mid,
-                    "model_name": name,
-                    "model_slug": slug,
-                    "url": f"/en/overview/{make_id}-{make_slug}/{mid}-{slug}.html",
-                }
-            )
+            models.append({
+                "model_id": mid,
+                "model_name": name,
+                "model_slug": slug,
+                "url": f"/en/overview/{make_id}-{make_slug}/{mid}-{slug}.html",
+            })
 
     if not models:
         log.warning(
-            "No models found for make_id=%d (AJAX response could not be parsed). "
-            "Response preview: %.200s",
-            make_id, text,
+            "No models for make_id=%d. Response: %.200s", make_id, text
         )
     else:
         log.info("Parsed %d models for make_id=%d via AJAX.", len(models), make_id)
-
     return models
 
+
 # ══════════════════════════════════════════════════════════════════════
-# 2b. Parse models from a make page (legacy fallback)
+# 2b. Parse models from page HTML (legacy fallback)
 # ══════════════════════════════════════════════════════════════════════
 
 def parse_models(html: str, make_id: int) -> list[dict[str, Any]]:
-    """
-    Return ``[{model_id, model_name, model_slug, url}, ...]``
-    from a make's overview page (or any page containing model links /
-    a model ``<select>``).
-
-    NOTE: Make-level overview pages (/en/overview/{id}-{slug}.html) no
-    longer exist on Spritmonitor.  Prefer ``parse_models_ajax`` with the
-    AJAX endpoint instead.  This function is kept as a fallback in case
-    the page HTML contains model links or a model ``<select>``.
-    """
     soup = BeautifulSoup(html, "lxml")
     models: list[dict[str, Any]] = []
     seen_ids: set[int] = set()
 
-    # Strategy A: links matching the model URL pattern
     for a_tag in soup.find_all("a", href=_RE_MODEL_HREF):
         m = _RE_MODEL_HREF.search(a_tag["href"])
         if not m:
@@ -246,16 +255,13 @@ def parse_models(html: str, make_id: int) -> list[dict[str, Any]]:
         if model_id == 0 or model_id in seen_ids:
             continue
         seen_ids.add(model_id)
-        models.append(
-            {
-                "model_id": model_id,
-                "model_name": a_tag.get_text(strip=True),
-                "model_slug": m.group(3),
-                "url": a_tag["href"],
-            }
-        )
+        models.append({
+            "model_id": model_id,
+            "model_name": a_tag.get_text(strip=True),
+            "model_slug": m.group(3),
+            "url": a_tag["href"],
+        })
 
-    # Strategy B: <select> / <option>
     if not models:
         for select in soup.find_all("select"):
             select_id = (select.get("id") or select.get("name") or "").lower()
@@ -268,24 +274,17 @@ def parse_models(html: str, make_id: int) -> list[dict[str, Any]]:
                             seen_ids.add(mid)
                             name = opt.get_text(strip=True)
                             slug = _slugify(name)
-                            models.append(
-                                {
-                                    "model_id": mid,
-                                    "model_name": name,
-                                    "model_slug": slug,
-                                    "url": f"/en/overview/{make_id}-X/{mid}-{slug}.html",
-                                }
-                            )
+                            models.append({
+                                "model_id": mid,
+                                "model_name": name,
+                                "model_slug": slug,
+                                "url": f"/en/overview/{make_id}-X/{mid}-{slug}.html",
+                            })
 
     if not models:
-        log.warning(
-            "Could not parse any models for make_id=%d. "
-            "The HTML structure may have changed.",
-            make_id,
-        )
+        log.warning("Could not parse models for make_id=%d.", make_id)
     else:
         log.info("Parsed %d models for make_id=%d.", len(models), make_id)
-
     return models
 
 
@@ -293,90 +292,200 @@ def parse_models(html: str, make_id: int) -> list[dict[str, Any]]:
 # 3. Parse vehicle entries from a model page
 # ══════════════════════════════════════════════════════════════════════
 
+def _parse_searchresult_row(tds: list) -> dict[str, Any] | None:
+    """
+    Parse one ``<tr>`` of the Spritmonitor ``<table class="searchresults">``.
+
+    Columns (by inspection):
+        0  picture
+        1  description  (class="description") — detail link, name,
+           fuel type, power
+        2  consumption  (number only; unit in ``onmouseover`` tooltip)
+        3  manufacturer-MPG deviation
+        4  fuelings     (count in ``onmouseover`` tooltip)
+        5  owner        (class="owner")
+    """
+    # ── find description cell ────────────────────────────────────────
+    desc_td = None
+    for td in tds:
+        if "description" in (td.get("class") or []):
+            desc_td = td
+            break
+    if desc_td is None:
+        for td in tds:
+            if td.find("a", href=_RE_DETAIL_HREF):
+                desc_td = td
+                break
+    if desc_td is None:
+        return None
+
+    # ── detail link & title ──────────────────────────────────────────
+    detail_link = desc_td.find("a", href=_RE_DETAIL_HREF)
+    if not detail_link:
+        return None
+
+    m = _RE_DETAIL_HREF.search(detail_link["href"])
+    vehicle: dict[str, Any] = {
+        "vehicle_id": int(m.group(1)) if m else None,
+        "detail_url": detail_link["href"],
+    }
+
+    # title may span two lines via <br>
+    raw_title = detail_link.get_text(" ", strip=True)
+    vehicle["title"] = re.sub(r"\s+", " ", raw_title).strip()
+
+    desc_text = desc_td.get_text(" ", strip=True)
+
+    # ── consumption from tooltip ─────────────────────────────────────
+    consumption, consumption_unit = None, None
+    for td in tds:
+        if td is desc_td:
+            continue                        # skip description column
+        tip = _extract_tooltip_text(td)
+        if tip:
+            cm = _RE_CONSUMPTION.search(tip)
+            if cm:
+                consumption = _parse_float(cm.group(1))
+                consumption_unit = cm.group(2).strip()
+                break
+    vehicle["consumption"] = consumption
+    vehicle["consumption_unit"] = consumption_unit
+
+    # ── fuelings from tooltip ────────────────────────────────────────
+    fuelings = None
+    for td in tds:
+        tip = _extract_tooltip_text(td)
+        if tip:
+            fm = re.search(r"(\d+)\s*Fueling", tip, re.I)
+            if fm:
+                fuelings = int(fm.group(1))
+                break
+    vehicle["fuelings"] = fuelings
+
+    # ── power ────────────────────────────────────────────────────────
+    km = _RE_POWER_KW.search(desc_text)
+    vehicle["power_kw"] = int(km.group(1)) if km else None
+    pm = _RE_POWER_PS.search(desc_text)
+    vehicle["power_ps"] = int(pm.group(1)) if pm else None
+
+    # ── displacement ─────────────────────────────────────────────────
+    ccm_m = _RE_CCM.search(desc_text)
+    vehicle["engine_ccm"] = int(ccm_m.group(1)) if ccm_m else None
+
+    # ── year ─────────────────────────────────────────────────────────
+    ym = _RE_YEAR.search(vehicle["title"])
+    vehicle["year"] = int(ym.group(1)) if ym else None
+
+    # ── fuel type ────────────────────────────────────────────────────
+    vehicle["fuel_type_raw"] = _extract_fuel_type(desc_td)
+
+    # ── transmission ─────────────────────────────────────────────────
+    vehicle["transmission"] = _extract_transmission(desc_text)
+
+    return vehicle
+
+
 def parse_vehicles(html: str) -> list[dict[str, Any]]:
     """
     Parse individual vehicle entries from a model's vehicle-list page.
 
-    Returns a list of raw vehicle dicts with fields:
-        vehicle_id, title, fuel_type_raw, consumption, consumption_unit,
-        fuelings, power_kw, power_ps, engine_ccm, year, detail_url
+    Returns a list of raw vehicle dicts.
     """
     soup = BeautifulSoup(html, "lxml")
     vehicles: list[dict[str, Any]] = []
 
-    # ── Strategy A: look for <div> / <tr> blocks that contain
-    #    consumption data (very generic — works across layouts) ────────
+    # ── Strategy A: Spritmonitor <table class="searchresults"> ───────
+    #    Consumption values are in onmouseover tooltip attributes.
+    results_table = soup.find("table", class_="searchresults")
+    if results_table:
+        tbody = results_table.find("tbody")
+        rows = (
+            tbody.find_all("tr", recursive=False)
+            if tbody
+            else results_table.find_all("tr")
+        )
+        for tr in rows:
+            tds = tr.find_all("td", recursive=False)
+            if len(tds) < 3:
+                continue
+            v = _parse_searchresult_row(tds)
+            if v and v.get("consumption") is not None:
+                vehicles.append(v)
 
-    # Find all links to vehicle detail pages
+    if vehicles:
+        log.debug(
+            "Parsed %d vehicle entries from searchresults table.",
+            len(vehicles),
+        )
+        return vehicles
+
+    # ── Strategy B: detail links + tooltip fallback ──────────────────
     detail_links = soup.find_all("a", href=_RE_DETAIL_HREF)
-
     if detail_links:
-        # For each detail link, the surrounding container has the data
         for link in detail_links:
             vehicle: dict[str, Any] = {}
-
             m = _RE_DETAIL_HREF.search(link["href"])
             vehicle["vehicle_id"] = int(m.group(1)) if m else None
             vehicle["detail_url"] = link["href"]
             vehicle["title"] = link.get_text(strip=True)
 
-            # Walk up to find the enclosing container
             container = _find_container(link)
             if container is None:
                 container = link.parent
 
             text_block = container.get_text(" ", strip=True)
 
-            # Consumption
-            cm = _RE_CONSUMPTION.search(text_block)
-            if cm:
-                vehicle["consumption"] = _parse_float(cm.group(1))
-                vehicle["consumption_unit"] = cm.group(2).strip()
-            else:
-                vehicle["consumption"] = None
-                vehicle["consumption_unit"] = None
+            # Try tooltips first, then regex on text
+            consumption, unit = _extract_consumption_from_tooltips(container)
+            if consumption is None:
+                cm = _RE_CONSUMPTION.search(text_block)
+                if cm:
+                    consumption = _parse_float(cm.group(1))
+                    unit = cm.group(2).strip()
+            vehicle["consumption"] = consumption
+            vehicle["consumption_unit"] = unit
 
-            # Fuelings
-            fm = _RE_FUELINGS.search(text_block)
-            vehicle["fuelings"] = _parse_int(fm.group(1)) if fm else None
+            fuelings = _extract_fuelings_from_tooltips(container)
+            if fuelings is None:
+                fm = _RE_FUELINGS.search(text_block)
+                fuelings = _parse_int(fm.group(1)) if fm else None
+            vehicle["fuelings"] = fuelings
 
-            # Power
             km = _RE_POWER_KW.search(text_block)
             vehicle["power_kw"] = int(km.group(1)) if km else None
             pm = _RE_POWER_PS.search(text_block)
             vehicle["power_ps"] = int(pm.group(1)) if pm else None
-
-            # CCM
             ccm_m = _RE_CCM.search(text_block)
             vehicle["engine_ccm"] = int(ccm_m.group(1)) if ccm_m else None
-
-            # Year
             ym = _RE_YEAR.search(vehicle.get("title", ""))
             vehicle["year"] = int(ym.group(1)) if ym else None
-
-            # Fuel type — look for known keywords
             vehicle["fuel_type_raw"] = _extract_fuel_type(container)
-
-            # Transmission
             vehicle["transmission"] = _extract_transmission(text_block)
 
             if vehicle.get("consumption") is not None:
                 vehicles.append(vehicle)
 
-    # ── Strategy B: table rows with consumption values ────────────────
+    # ── Strategy C: any <tr> with tooltip consumption ────────────────
     if not vehicles:
         for tr in soup.find_all("tr"):
-            text = tr.get_text(" ", strip=True)
-            cm = _RE_CONSUMPTION.search(text)
-            if not cm:
+            consumption, unit = _extract_consumption_from_tooltips(tr)
+            if consumption is None:
+                text = tr.get_text(" ", strip=True)
+                cm = _RE_CONSUMPTION.search(text)
+                if cm:
+                    consumption = _parse_float(cm.group(1))
+                    unit = cm.group(2).strip()
+            if consumption is None:
                 continue
+
+            text = tr.get_text(" ", strip=True)
             vehicle = {
-                "consumption": _parse_float(cm.group(1)),
-                "consumption_unit": cm.group(2).strip(),
+                "consumption": consumption,
+                "consumption_unit": unit,
                 "title": text[:200],
                 "vehicle_id": None,
                 "detail_url": None,
-                "fuelings": None,
+                "fuelings": _extract_fuelings_from_tooltips(tr),
                 "power_kw": None,
                 "power_ps": None,
                 "engine_ccm": None,
@@ -384,27 +493,113 @@ def parse_vehicles(html: str) -> list[dict[str, Any]]:
                 "fuel_type_raw": _extract_fuel_type(tr),
                 "transmission": _extract_transmission(text),
             }
-            # Try to find a detail link in this row
             dl = tr.find("a", href=_RE_DETAIL_HREF)
             if dl:
                 dm = _RE_DETAIL_HREF.search(dl["href"])
                 vehicle["vehicle_id"] = int(dm.group(1)) if dm else None
                 vehicle["detail_url"] = dl["href"]
                 vehicle["title"] = dl.get_text(strip=True)
-
-            fm = _RE_FUELINGS.search(text)
-            vehicle["fuelings"] = _parse_int(fm.group(1)) if fm else None
             km = _RE_POWER_KW.search(text)
             vehicle["power_kw"] = int(km.group(1)) if km else None
             ym = _RE_YEAR.search(vehicle.get("title", "") or text)
             vehicle["year"] = int(ym.group(1)) if ym else None
             ccm_m = _RE_CCM.search(text)
             vehicle["engine_ccm"] = int(ccm_m.group(1)) if ccm_m else None
-
+            if vehicle["fuelings"] is None:
+                fm = _RE_FUELINGS.search(text)
+                vehicle["fuelings"] = _parse_int(fm.group(1)) if fm else None
             vehicles.append(vehicle)
 
     log.debug("Parsed %d vehicle entries from page.", len(vehicles))
     return vehicles
+
+
+# ══════════════════════════════════════════════════════════════════════
+# 3b. Parse sidebar summary table (model-level aggregates)
+# ══════════════════════════════════════════════════════════════════════
+
+def parse_model_summary(html: str) -> list[dict[str, Any]]:
+    """
+    Parse the sidebar ``<table class="searchsummary">`` which has
+    per-fuel-type aggregated consumption for the model.
+
+    Returns ``[{fuel_type_raw, vehicle_count, min_consumption,
+    avg_consumption, max_consumption, consumption_unit}, ...]``
+    """
+    soup = BeautifulSoup(html, "lxml")
+    summaries: list[dict[str, Any]] = []
+
+    table = soup.find("table", class_="searchsummary")
+    if not table:
+        return summaries
+
+    tbody = table.find("tbody")
+    rows = tbody.find_all("tr") if tbody else table.find_all("tr")
+
+    for tr in rows:
+        tds = tr.find_all("td")
+        if len(tds) < 5:
+            continue
+
+        # Identify cells by class or position
+        count_td = name_td = None
+        for td in tds:
+            cls = td.get("class") or []
+            if "count" in cls:
+                count_td = td
+            elif "name" in cls:
+                name_td = td
+
+        # Fallback to positional: count, name, min, avg, max
+        if count_td is None:
+            count_td = tds[0]
+        if name_td is None:
+            name_td = tds[1]
+
+        count_text = count_td.get_text(strip=True)
+        vehicle_count = _parse_int(count_text)
+        fuel_name = name_td.get_text(strip=True)
+        if not fuel_name or vehicle_count is None:
+            continue
+
+        # min / avg / max from tooltips (positions 2, 3, 4)
+        values: list[tuple[float | None, str | None]] = []
+        for td in tds[2:5]:
+            tip = _extract_tooltip_text(td)
+            if tip:
+                cm = _RE_CONSUMPTION.search(tip)
+                if cm:
+                    values.append(
+                        (_parse_float(cm.group(1)), cm.group(2).strip())
+                    )
+                else:
+                    values.append((None, None))
+            else:
+                values.append((None, None))
+
+        while len(values) < 3:
+            values.append((None, None))
+
+        min_c, min_u = values[0]
+        avg_c, avg_u = values[1]
+        max_c, max_u = values[2]
+        unit = avg_u or min_u or max_u
+
+        if avg_c is not None:
+            summaries.append({
+                "fuel_type_raw": fuel_name,
+                "vehicle_count": vehicle_count,
+                "min_consumption": min_c,
+                "avg_consumption": avg_c,
+                "max_consumption": max_c,
+                "consumption_unit": unit,
+            })
+
+    if summaries:
+        log.debug(
+            "Parsed %d fuel-type summaries from sidebar.", len(summaries)
+        )
+    return summaries
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -421,7 +616,6 @@ def parse_max_page(html: str) -> int:
         if m:
             max_page = max(max_page, int(m.group(1)))
 
-    # Also look for text like "Page 1 of 19"
     page_of = re.search(
         r"(?:page|Seite)\s+\d+\s+(?:of|von)\s+(\d+)",
         soup.get_text(), re.I,
@@ -449,15 +643,12 @@ def parse_total_vehicles(html: str) -> int | None:
 def parse_model_context(html: str) -> dict[str, Any]:
     """
     Try to extract contextual data from a model page:
-    route profile, monthly consumption, histogram, CO₂, fuel cost.
-
-    Returns a dict with available fields (may be mostly empty).
+    route profile, CO₂, fuel cost.
     """
     soup = BeautifulSoup(html, "lxml")
     text = soup.get_text(" ", strip=True)
     ctx: dict[str, Any] = {}
 
-    # Route profile percentages
     for label, key in [
         ("motorway", "pct_motorway"),
         ("highway", "pct_motorway"),
@@ -477,12 +668,10 @@ def parse_model_context(html: str) -> dict[str, Any]:
             val = float(f"{m.group(1)}.{m.group(2) or '0'}")
             ctx[key] = val
 
-    # CO₂
     co2 = re.search(r"(\d{2,3})\s*g\s*/?\s*km", text, re.I)
     if co2:
         ctx["co2_g_per_km"] = float(co2.group(1))
 
-    # Fuel cost
     cost = re.search(
         r"(\d{1,3}[.,]\d{1,2})\s*(?:€|EUR)\s*/?\s*100\s*km", text, re.I
     )
@@ -528,34 +717,46 @@ def _find_container(tag: Tag, max_depth: int = 5) -> Tag | None:
         if current is None:
             return None
         if current.name in ("div", "tr", "li", "article", "section"):
-            # Check this container has some consumption text
+            # Check for consumption in text OR in tooltips
             if _RE_CONSUMPTION.search(current.get_text(" ", strip=True)):
+                return current
+            # Also check tooltips in this container
+            c, _ = _extract_consumption_from_tooltips(current)
+            if c is not None:
                 return current
         current = current.parent
     return tag.parent
 
 
+# Fuel type keywords — sorted longest-first at lookup time so that
+# "plug-in hybrid gasoline" is matched before plain "gasoline".
 _FUEL_KEYWORDS = {
-    "diesel": "diesel",
+    "plug-in hybrid gasoline": "hybrid",
+    "plug-in hybrid diesel": "hybrid",
+    "diesel with adblue": "diesel",
+    "hybrid gasoline": "hybrid",
+    "hybrid diesel": "hybrid",
+    "natural gas": "cng",
     "super e10": "super e10",
     "super plus": "super plus",
+    "electricity": "electric",
     "super 95": "super",
     "super 98": "super plus",
-    "super": "super",
-    "benzin": "super",
-    "petrol": "super",
     "gasoline": "super",
-    "lpg": "lpg",
-    "autogas": "lpg",
-    "cng": "cng",
-    "erdgas": "cng",
-    "natural gas": "cng",
-    "electric": "electric",
-    "elektro": "electric",
-    "strom": "electric",
-    "hybrid": "hybrid",
-    "plug-in": "hybrid",
     "hydrogen": "hydrogen",
+    "autogas": "lpg",
+    "electric": "electric",
+    "benzin": "super",
+    "diesel": "diesel",
+    "elektro": "electric",
+    "erdgas": "cng",
+    "hybrid": "hybrid",
+    "petrol": "super",
+    "plug-in": "hybrid",
+    "super": "super",
+    "strom": "electric",
+    "cng": "cng",
+    "lpg": "lpg",
     "e85": "e85",
 }
 
@@ -563,11 +764,9 @@ _FUEL_KEYWORDS = {
 def _extract_fuel_type(container: Tag) -> str | None:
     """Try to identify fuel type from a container's text and images."""
     text = container.get_text(" ", strip=True).lower()
-    # Check from longest keyword to shortest to avoid partial matches
     for keyword in sorted(_FUEL_KEYWORDS, key=len, reverse=True):
         if keyword in text:
             return _FUEL_KEYWORDS[keyword]
-    # Check alt text on images (Spritmonitor uses fuel-type icons)
     for img in container.find_all("img"):
         alt = (img.get("alt") or "").lower()
         src = (img.get("src") or "").lower()
@@ -581,14 +780,11 @@ def _extract_transmission(text: str) -> str | None:
     text_lower = text.lower()
     if any(k in text_lower for k in (
         "automatic", "automatik", "auto.", "dsg", "dct", "cvt",
-        "tiptronic", "s tronic", "pdk", "at",
+        "tiptronic", "s tronic", "pdk",
     )):
-        # Be careful with "at" — could be part of other words
-        if ("automat" in text_lower or "dsg" in text_lower
-                or "dct" in text_lower or "cvt" in text_lower):
-            return "automatic"
+        return "automatic"
     if any(k in text_lower for k in (
-        "manual", "manuell", "schaltgetriebe", "mt",
+        "manual", "manuell", "schaltgetriebe",
     )):
         return "manual"
     return None
@@ -599,26 +795,19 @@ def extract_engine_name(
 ) -> str:
     """
     Try to extract a clean engine designation from a vehicle title.
-
-    Example:
-        "2019 Volkswagen Golf VII 1.5 TSI ACT BlueMotion"
-        → "1.5 TSI ACT BlueMotion"
     """
-    # Remove year
     cleaned = _RE_YEAR.sub("", title).strip()
-    # Remove make and model names
     for word in (make_name, model_name):
         if word:
-            cleaned = re.sub(re.escape(word), "", cleaned, flags=re.I).strip()
-    # Remove generation designators like "VII", "VIII", "Mk7", "G30"
+            cleaned = re.sub(
+                re.escape(word), "", cleaned, flags=re.I
+            ).strip()
     cleaned = re.sub(
         r"\b(?:[IVX]{1,4}|Mk\s?\d|[A-Z]\d{1,2}|Facelift|FL|LCI)\b",
         "",
         cleaned,
         flags=re.I,
     ).strip()
-    # Remove excess whitespace
     cleaned = re.sub(r"\s{2,}", " ", cleaned).strip()
-    # Remove leading/trailing dashes
     cleaned = cleaned.strip(" -–—")
     return cleaned if cleaned else "unknown"
