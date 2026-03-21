@@ -682,6 +682,238 @@ def parse_model_context(html: str) -> dict[str, Any]:
 
 
 # ══════════════════════════════════════════════════════════════════════
+# 6. Parse vehicle detail page (/en/detail/{id}.html)
+# ══════════════════════════════════════════════════════════════════════
+
+def parse_vehicle_detail(html: str, vehicle_id: int) -> dict[str, Any]:
+    """
+    Parse a vehicle detail page (e.g. /en/detail/1583120.html).
+
+    Extracts vehicle header info (title, year, power, transmission,
+    fuel type) and per-fuel-type consumption sections from the
+    ``<table class="detailtable">``.
+
+    Returns a dict with keys:
+        vehicle_id, title, year, power_kw, power_ps, engine_ccm,
+        transmission, fuel_type_raw, fuel_sections (list), cdetail_links (list)
+    """
+    soup = BeautifulSoup(html, "lxml")
+    result: dict[str, Any] = {"vehicle_id": vehicle_id}
+
+    # ── Vehicle header ───────────────────────────────────────────────
+    details_div = soup.find("div", id="vehicledetails")
+    if details_div:
+        h1 = details_div.find("h1")
+        if h1:
+            result["title"] = h1.get_text(strip=True)
+
+        full_text = details_div.get_text(" ", strip=True)
+
+        # Year
+        ym = re.search(r"\byear\s+(\d{4})\b", full_text, re.I)
+        if ym:
+            result["year"] = int(ym.group(1))
+
+        # Power
+        kwm = _RE_POWER_KW.search(full_text)
+        if kwm:
+            result["power_kw"] = int(kwm.group(1))
+        psm = _RE_POWER_PS.search(full_text)
+        if psm:
+            result["power_ps"] = int(psm.group(1))
+
+        # Engine displacement
+        ccm_m = _RE_CCM.search(full_text)
+        if ccm_m:
+            result["engine_ccm"] = int(ccm_m.group(1))
+
+        # Transmission
+        result["transmission"] = _extract_transmission(full_text)
+
+        # Fuel type
+        result["fuel_type_raw"] = _extract_fuel_type(details_div)
+
+    # ── Fuel sections from detailtable ───────────────────────────────
+    fuel_sections: list[dict[str, Any]] = []
+    cdetail_links: list[str] = []
+
+    detail_table = soup.find("table", class_="detailtable")
+    if detail_table:
+        all_rows = detail_table.find_all("tr")
+        i = 0
+        while i < len(all_rows):
+            tr = all_rows[i]
+
+            # Skip spacers
+            if tr.find("td", class_="spacer"):
+                i += 1
+                continue
+
+            # Skip already-expanded detail rows
+            if tr.find("td", class_="details"):
+                i += 1
+                continue
+
+            # New fuel section starts with td.showhide
+            showhide_td = tr.find("td", class_="showhide")
+            if not showhide_td:
+                i += 1
+                continue
+
+            section: dict[str, Any] = {}
+
+            # cdetail link
+            link = showhide_td.find("a")
+            if link and link.get("href"):
+                href = link["href"]
+                section["cdetail_url"] = href
+                img = link.find("img")
+                if img and "show" in (img.get("src") or ""):
+                    cdetail_links.append(href)
+
+            tds = tr.find_all("td")
+
+            # Fuel name — first non-empty td that isn't showhide / Consumption
+            for td in tds:
+                if "showhide" in (td.get("class") or []):
+                    continue
+                txt = td.get_text(strip=True)
+                if txt and "Consumption" not in txt and txt not in ("", "\xa0"):
+                    section["fuel_name"] = txt
+                    break
+
+            # Consumption — td with <strong> containing a unit
+            for td in tds:
+                strong = td.find("strong")
+                if strong:
+                    td_text = td.get_text(strip=True)
+                    c_m = re.search(
+                        r"([\d]+[.,]?\d*)\s*(l/100\s*km|kWh/100\s*km|kg/100\s*km)",
+                        td_text, re.I,
+                    )
+                    if c_m:
+                        section["consumption"] = _parse_float(c_m.group(1))
+                        section["consumption_unit"] = c_m.group(2).strip()
+                        break
+
+            # Subsequent rows: CO₂, fuel cost
+            j = i + 1
+            while j < len(all_rows):
+                ntr = all_rows[j]
+                if ntr.find("td", class_="spacer") or ntr.find("td", class_="showhide"):
+                    break
+                if ntr.find("td", class_="details"):
+                    j += 1
+                    continue
+                ntxt = ntr.get_text(" ", strip=True)
+
+                # CO₂
+                if "CO" in ntxt and "g/km" in ntxt:
+                    for td in ntr.find_all("td"):
+                        s = td.find("strong")
+                        if s and "g/km" in td.get_text():
+                            section["co2_g_per_km"] = _parse_float(s.get_text(strip=True))
+
+                # Fuel cost
+                if "cost" in ntxt.lower() or "EUR/100km" in ntxt:
+                    for td in ntr.find_all("td"):
+                        s = td.find("strong")
+                        if s and "EUR/100km" in td.get_text():
+                            section["fuel_cost_eur_per_100km"] = _parse_float(
+                                s.get_text(strip=True)
+                            )
+                j += 1
+
+            if section.get("fuel_name"):
+                fuel_sections.append(section)
+            i = j
+            continue
+
+    result["fuel_sections"] = fuel_sections
+    result["cdetail_links"] = cdetail_links
+
+    log.debug(
+        "Parsed vehicle detail %d: %d fuel sections, %d cdetail links.",
+        vehicle_id, len(fuel_sections), len(cdetail_links),
+    )
+    return result
+
+
+# ══════════════════════════════════════════════════════════════════════
+# 7. Parse expanded cdetail page
+# ══════════════════════════════════════════════════════════════════════
+
+def parse_vehicle_detail_expanded(html: str) -> dict[str, Any]:
+    """
+    Parse an expanded ``?cdetail=N`` page for route / tire / fuel-sort
+    breakdown.
+
+    Returns a dict that may contain:
+        consumption_motorway, consumption_city, consumption_country,
+        fuel_grade
+    """
+    soup = BeautifulSoup(html, "lxml")
+    result: dict[str, Any] = {}
+
+    detail_table = soup.find("table", class_="detailtable")
+    if not detail_table:
+        return result
+
+    current_category: str | None = None
+
+    for tr in detail_table.find_all("tr"):
+        detail_tds = tr.find_all("td", class_="details")
+        if not detail_tds:
+            continue
+
+        text = tr.get_text(" ", strip=True).replace("\xa0", " ").strip()
+
+        # Category headers
+        if "Routes:" in text:
+            current_category = "routes"
+            continue
+        if "Tires:" in text:
+            current_category = "tires"
+            continue
+        if "Driving style:" in text:
+            current_category = "style"
+            continue
+        if "Fuelsort:" in text:
+            current_category = "fuelsort"
+            continue
+        if "Extras:" in text:
+            current_category = "extras"
+            continue
+
+        if current_category == "routes":
+            b_tag = tr.find("b")
+            if b_tag:
+                val = _parse_float(b_tag.get_text(strip=True))
+                tl = text.lower()
+                if "motor-way" in tl or "motorway" in tl:
+                    result["consumption_motorway"] = val
+                elif "city" in tl:
+                    result["consumption_city"] = val
+                elif "country" in tl:
+                    result["consumption_country"] = val
+
+        elif current_category == "fuelsort":
+            for td in detail_tds:
+                td_text = td.get_text(strip=True).replace("\xa0", " ").strip()
+                if td_text and any(
+                    kw in td_text.lower()
+                    for kw in (
+                        "premium", "super", "gasoline", "diesel",
+                        "e10", "100+", "95", "98", "electricity",
+                    )
+                ):
+                    result["fuel_grade"] = td_text
+                    break
+
+    return result
+
+
+# ══════════════════════════════════════════════════════════════════════
 # Helpers
 # ══════════════════════════════════════════════════════════════════════
 
