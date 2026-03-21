@@ -11,8 +11,8 @@ class Config:
 
     # ── URLs ──────────────────────────────────────────────────────────
     BASE_URL = "https://www.spritmonitor.de"
-    OVERVIEW_URL = f"{BASE_URL}/en/"                              # CHANGED
-    AJAX_MODEL_URL = f"{BASE_URL}/en/ajaxModel.action"            # NEW
+    OVERVIEW_URL = f"{BASE_URL}/en/"
+    AJAX_MODEL_URL = f"{BASE_URL}/en/ajaxModel.action"
     LANG = "en"
 
     # ── HTTP ──────────────────────────────────────────────────────────
@@ -20,8 +20,9 @@ class Config:
         "USER_AGENT",
         "VroomBroom-DataBot/1.0 (data@vroombroom.app)",
     )
-    REQUEST_DELAY_MIN = float(os.getenv("REQUEST_DELAY_MIN", "1.0"))
+    REQUEST_DELAY_MIN = float(os.getenv("REQUEST_DELAY_MIN", "2.0"))      # CHANGED from 1.0
     REQUEST_DELAY_MAX = float(os.getenv("REQUEST_DELAY_MAX", "3.0"))
+    REQUEST_DELAY_JITTER = float(os.getenv("REQUEST_DELAY_JITTER", "1.0")) # NEW
     RATE_LIMIT_WAIT = int(os.getenv("RATE_LIMIT_WAIT", "600"))
     MAX_RETRIES = int(os.getenv("MAX_RETRIES", "3"))
     REQUEST_TIMEOUT = int(os.getenv("REQUEST_TIMEOUT", "30"))

@@ -1,5 +1,4 @@
 """HTTP client with caching, rate-limiting, and retry logic."""
-
 import hashlib
 import logging
 import random
@@ -94,11 +93,21 @@ class HttpClient:
 
     # ── rate limiting ─────────────────────────────────────────────────
 
-    def _wait(self):
+    def _wait(self):                                             # CHANGED
+        """
+        Enforce responsible request rate.
+
+        Base delay of REQUEST_DELAY_MIN (default 2 s) with random
+        jitter of ±REQUEST_DELAY_JITTER (default ±1 s).
+        Effective range with defaults: 1–3 seconds between requests.
+        """
         elapsed = time.time() - self._last_request_time
-        delay = random.uniform(
-            self.cfg.REQUEST_DELAY_MIN, self.cfg.REQUEST_DELAY_MAX
+        jitter = random.uniform(
+            -self.cfg.REQUEST_DELAY_JITTER,
+            self.cfg.REQUEST_DELAY_JITTER,
         )
+        delay = self.cfg.REQUEST_DELAY_MIN + jitter
+        delay = max(delay, 1.0)                                  # safety floor
         if elapsed < delay:
             sleep_for = delay - elapsed
             log.debug("Rate-limit sleep %.1fs", sleep_for)

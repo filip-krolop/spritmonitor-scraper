@@ -31,8 +31,8 @@
     "histogram_buckets": null,
     "consumption_motorway": 14.79,
     "consumption_city": 14.79,
-    "first_seen_at": "2026-03-21T09:53:03.883963Z",
-    "scraped_at": "2026-03-21T09:53:03.883963Z"
+    "first_seen_at": "2026-03-21T11:25:47.486158Z",
+    "scraped_at": "2026-03-21T11:25:47.486158Z"
   },
   {
     "id": "1642515",
@@ -67,8 +67,8 @@
     "consumption_motorway": 12.28,
     "consumption_city": 12.28,
     "consumption_country": 12.28,
-    "first_seen_at": "2026-03-21T09:53:03.883963Z",
-    "scraped_at": "2026-03-21T09:53:03.883963Z"
+    "first_seen_at": "2026-03-21T11:25:47.486158Z",
+    "scraped_at": "2026-03-21T11:25:47.486158Z"
   },
   {
     "id": "352207",
@@ -101,8 +101,8 @@
     "fuel_cost_eur_per_100km": 7.55,
     "histogram_buckets": null,
     "consumption_country": 10.82,
-    "first_seen_at": "2026-03-21T09:53:03.883963Z",
-    "scraped_at": "2026-03-21T09:53:03.883963Z"
+    "first_seen_at": "2026-03-21T11:25:47.486158Z",
+    "scraped_at": "2026-03-21T11:25:47.486158Z"
   },
   {
     "id": "460832",
@@ -137,8 +137,8 @@
     "consumption_motorway": 10.37,
     "consumption_city": 11.18,
     "consumption_country": 10.44,
-    "first_seen_at": "2026-03-21T09:53:03.883963Z",
-    "scraped_at": "2026-03-21T09:53:03.883963Z"
+    "first_seen_at": "2026-03-21T11:25:47.486158Z",
+    "scraped_at": "2026-03-21T11:25:47.486158Z"
   },
   {
     "id": "507314",
@@ -172,8 +172,8 @@
     "histogram_buckets": null,
     "consumption_motorway": 11.31,
     "consumption_city": 11.31,
-    "first_seen_at": "2026-03-21T09:53:03.883963Z",
-    "scraped_at": "2026-03-21T09:53:03.883963Z"
+    "first_seen_at": "2026-03-21T11:25:47.486158Z",
+    "scraped_at": "2026-03-21T11:25:47.486158Z"
   },
   {
     "id": "508241",
@@ -208,8 +208,8 @@
     "consumption_motorway": 10.02,
     "consumption_city": 10.39,
     "consumption_country": 10.24,
-    "first_seen_at": "2026-03-21T09:53:03.883963Z",
-    "scraped_at": "2026-03-21T09:53:03.883963Z"
+    "first_seen_at": "2026-03-21T11:25:47.486158Z",
+    "scraped_at": "2026-03-21T11:25:47.486158Z"
   },
   {
     "id": "548667",
@@ -244,8 +244,8 @@
     "consumption_motorway": 10.18,
     "consumption_city": 10.88,
     "consumption_country": 10.21,
-    "first_seen_at": "2026-03-21T09:53:03.883963Z",
-    "scraped_at": "2026-03-21T09:53:03.883963Z"
+    "first_seen_at": "2026-03-21T11:25:47.486158Z",
+    "scraped_at": "2026-03-21T11:25:47.486158Z"
   },
   {
     "id": "609887",
@@ -280,8 +280,8 @@
     "consumption_motorway": 10.56,
     "consumption_city": 11.73,
     "consumption_country": 11.19,
-    "first_seen_at": "2026-03-21T09:53:03.883963Z",
-    "scraped_at": "2026-03-21T09:53:03.883963Z"
+    "first_seen_at": "2026-03-21T11:25:47.486158Z",
+    "scraped_at": "2026-03-21T11:25:47.486158Z"
   },
   {
     "id": "694938",
@@ -315,8 +315,8 @@
     "histogram_buckets": null,
     "consumption_motorway": 4.86,
     "consumption_country": 4.86,
-    "first_seen_at": "2026-03-21T09:53:03.883963Z",
-    "scraped_at": "2026-03-21T09:53:03.883963Z"
+    "first_seen_at": "2026-03-21T11:25:47.486158Z",
+    "scraped_at": "2026-03-21T11:25:47.486158Z"
   },
   {
     "id": "746426",
@@ -350,8 +350,8 @@
     "histogram_buckets": null,
     "consumption_motorway": 5.33,
     "consumption_city": 5.33,
-    "first_seen_at": "2026-03-21T09:53:03.883963Z",
-    "scraped_at": "2026-03-21T09:53:03.883963Z"
+    "first_seen_at": "2026-03-21T11:25:47.486158Z",
+    "scraped_at": "2026-03-21T11:25:47.486158Z"
   },
   {
     "id": "752211",
@@ -386,8 +386,8 @@
     "consumption_motorway": 9.1,
     "consumption_city": 9.1,
     "consumption_country": 8.9,
-    "first_seen_at": "2026-03-21T09:53:03.883963Z",
-    "scraped_at": "2026-03-21T09:53:03.883963Z"
+    "first_seen_at": "2026-03-21T11:25:47.486158Z",
+    "scraped_at": "2026-03-21T11:25:47.486158Z"
   },
   {
     "id": "778708",
@@ -419,8 +419,8 @@
     "co2_g_per_km": 226.0,
     "fuel_cost_eur_per_100km": 7.51,
     "histogram_buckets": null,
-    "first_seen_at": "2026-03-21T09:53:03.883963Z",
-    "scraped_at": "2026-03-21T09:53:03.883963Z"
+    "first_seen_at": "2026-03-21T11:25:47.486158Z",
+    "scraped_at": "2026-03-21T11:25:47.486158Z"
   },
   {
     "id": "841715",
@@ -452,8 +452,8 @@
     "co2_g_per_km": 253.0,
     "fuel_cost_eur_per_100km": 8.59,
     "histogram_buckets": null,
-    "first_seen_at": "2026-03-21T09:53:03.883963Z",
-    "scraped_at": "2026-03-21T09:53:03.883963Z"
+    "first_seen_at": "2026-03-21T11:25:47.486158Z",
+    "scraped_at": "2026-03-21T11:25:47.486158Z"
   },
   {
     "id": "860612",
@@ -488,8 +488,8 @@
     "consumption_motorway": 16.42,
     "consumption_city": 18.44,
     "consumption_country": 16.61,
-    "first_seen_at": "2026-03-21T09:53:03.883963Z",
-    "scraped_at": "2026-03-21T09:53:03.883963Z"
+    "first_seen_at": "2026-03-21T11:25:47.486158Z",
+    "scraped_at": "2026-03-21T11:25:47.486158Z"
   },
   {
     "id": "972643",
@@ -521,7 +521,7 @@
     "co2_g_per_km": 228.0,
     "fuel_cost_eur_per_100km": 8.93,
     "histogram_buckets": null,
-    "first_seen_at": "2026-03-21T09:53:03.883963Z",
-    "scraped_at": "2026-03-21T09:53:03.883963Z"
+    "first_seen_at": "2026-03-21T11:25:47.486158Z",
+    "scraped_at": "2026-03-21T11:25:47.486158Z"
   }
 ]

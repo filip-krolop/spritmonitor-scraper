@@ -54,20 +54,37 @@ cp .env.example .env
 All settings live in `.env` (or environment variables). Defaults are
 fine for most use cases.
 
-| Variable              | Default                                          | Description                           |
-| --------------------- | ------------------------------------------------ | ------------------------------------- |
-| `USER_AGENT`          | `VroomBroom-DataBot/1.0 (data@vroombroom.app)`   | HTTP User-Agent header                |
-| `REQUEST_DELAY_MIN`   | `1.0`                                            | Min seconds between requests          |
-| `REQUEST_DELAY_MAX`   | `3.0`                                            | Max seconds between requests          |
-| `RATE_LIMIT_WAIT`     | `600`                                            | Seconds to wait on HTTP 429           |
-| `MAX_RETRIES`         | `3`                                              | Retry count per request               |
-| `REQUEST_TIMEOUT`     | `30`                                             | HTTP timeout in seconds               |
-| `CACHE_DIR`           | `./cache`                                        | Local HTML cache directory            |
-| `CACHE_TTL_DAYS`      | `7`                                              | Cache validity in days                |
-| `OUTPUT_DIR`          | `./output`                                       | Where CSV/JSON are written            |
-| `LOGS_DIR`            | `./logs`                                         | Where log files are written           |
-| `PROGRESS_FILE`       | `./progress.json`                                | Resumable-progress state file         |
-| `MAX_PAGES_PER_MODEL` | `50`                                             | Max paginated pages per model         |
+| Variable | Default | Description |
+| ----------------------- | ------------------------------------------------ | ----------------------------------------- |
+| `USER_AGENT` | `VroomBroom-DataBot/1.0 (data@vroombroom.app)` | HTTP User-Agent header |
+| `REQUEST_DELAY_MIN` | `2.0` | Base delay in seconds between requests |
+| `REQUEST_DELAY_MAX` | `3.0` | Max delay (legacy, kept for reference) |
+| `REQUEST_DELAY_JITTER` | `1.0` | Random jitter ±N seconds added to base |
+| `RATE_LIMIT_WAIT` | `600` | Seconds to wait on HTTP 429 (10 minutes) |
+| `MAX_RETRIES` | `3` | Retry count per request |
+| `REQUEST_TIMEOUT` | `30` | HTTP timeout in seconds |
+| `CACHE_DIR` | `./cache` | Local HTML cache directory |
+| `CACHE_TTL_DAYS` | `7` | Cache validity in days |
+| `OUTPUT_DIR` | `./output` | Where CSV/JSON are written |
+| `LOGS_DIR` | `./logs` | Where log files are written |
+| `PROGRESS_FILE` | `./progress.json` | Resumable-progress state file |
+| `MAX_PAGES_PER_MODEL` | `50` | Max paginated pages per model |
+
+### Rate limiting explained
+
+The delay between requests is calculated as:
+
+```
+delay = REQUEST_DELAY_MIN + random.uniform(-REQUEST_DELAY_JITTER, +REQUEST_DELAY_JITTER)
+delay = max(delay, 1.0)   # safety floor — never less than 1 second
+```
+
+With the defaults (`REQUEST_DELAY_MIN=2.0`, `REQUEST_DELAY_JITTER=1.0`):
+
+- **Base wait:** 2 seconds
+- **Jitter:** ±1 second
+- **Effective range:** 1–3 seconds between requests
+- **On HTTP 429:** full stop for 10 minutes (`RATE_LIMIT_WAIT=600`)
 
 ---
 
@@ -130,26 +147,26 @@ python main.py --mode new
 
 ```
 main.py (CLI)
- │
- ▼
+│
+▼
 SpritmonitorSpider ── orchestrates the chosen mode
- │
- ├── HttpClient ── GET with caching, rate-limiting, retry
- │    └── ./cache/ (SHA-256-hashed filenames, 7-day TTL)
- │
- ├── Parser ── BeautifulSoup HTML parsing
- │    ├── parse_makes()           → list of {make_id, make_name, …}
- │    ├── parse_models_ajax()     → list of {model_id, model_name, …}
- │    ├── parse_vehicles()        → list entries from model overview page
- │    ├── parse_vehicle_detail()  → header + fuel sections from /detail/{id}.html
- │    └── parse_vehicle_detail_expanded() → cdetail route/tire/fuel-grade data
- │
- ├── Validator ── check ranges, required fields
- │
- ├── Storage ── UPSERT into CSV + JSON (keyed by vehicle ID)
- │    └── ./output/
- │
- └── ProgressTracker ── ./progress.json (resumable)
+│
+├── HttpClient ── GET with caching, rate-limiting, retry
+│   └── ./cache/ (SHA-256-hashed filenames, 7-day TTL)
+│
+├── Parser ── BeautifulSoup HTML parsing
+│   ├── parse_makes()                → list of {make_id, make_name, …}
+│   ├── parse_models_ajax()          → list of {model_id, model_name, …}
+│   ├── parse_vehicles()             → list entries from model overview page
+│   ├── parse_vehicle_detail()       → header + fuel sections from /detail/{id}.html
+│   └── parse_vehicle_detail_expanded() → cdetail route/tire/fuel-grade data
+│
+├── Validator ── check ranges, required fields
+│
+├── Storage ── UPSERT into CSV + JSON (keyed by vehicle ID)
+│   └── ./output/
+│
+└── ProgressTracker ── ./progress.json (resumable)
 ```
 
 ### Scraping flow per model
@@ -166,15 +183,17 @@ SpritmonitorSpider ── orchestrates the chosen mode
 
 ### Responsible scraping
 
-| Rule                    | Implementation                                         |
-| ----------------------- | ------------------------------------------------------ |
-| Delay between requests  | 1–3 s random jitter                                    |
-| Max concurrency         | 1 (sequential)                                         |
-| On HTTP 429             | Wait 10 minutes, then retry                            |
-| On HTTP 403 / 503       | Stop immediately                                       |
-| User-Agent              | Identifies as `VroomBroom-DataBot/1.0`                 |
-| Caching                 | HTML cached locally for 7 days                         |
-| No UA rotation          | Single honest User-Agent                               |
+| Rule | Implementation |
+| ----------------------- | ----------------------------------------------------------------- |
+| Base delay | 2 seconds between requests (`REQUEST_DELAY_MIN=2.0`) |
+| Jitter | ±1 second random (`REQUEST_DELAY_JITTER=1.0`) |
+| Effective delay | 1–3 seconds (2s base ± 1s jitter, with 1s safety floor) |
+| Max concurrency | 1 (sequential — never parallel) |
+| On HTTP 429 | Stop and wait 10 minutes, then retry |
+| On HTTP 403 / 503 | Stop immediately — do not circumvent |
+| User-Agent | Identifies as `VroomBroom-DataBot/1.0 (data@vroombroom.app)` |
+| No UA rotation | Single honest User-Agent — never rotated |
+| Caching | HTML cached locally for 7 days — avoids repeat requests |
 
 ---
 
@@ -200,39 +219,39 @@ vehicle `https://www.spritmonitor.de/en/detail/1583120.html` has
 
 ### CSV columns
 
-| Column                      | Type    | Required | Description                                    |
+| Column | Type | Required | Description |
 | --------------------------- | ------- | -------- | ---------------------------------------------- |
-| `id`                        | STRING  | ✓        | Vehicle detail page ID (e.g. `"1583120"`)      |
-| `make_id`                   | INT     | ✓        | Spritmonitor make ID                           |
-| `model_id`                  | INT     | ✓        | Spritmonitor model ID                          |
-| `make_name`                 | STRING  | ✓        | e.g. "Volkswagen"                              |
-| `model_name`                | STRING  | ✓        | e.g. "Golf"                                    |
-| `generation_years`          | STRING  |          | e.g. "2024-2024"                               |
-| `year_from`                 | INT     |          | Model year from detail page                    |
-| `year_to`                   | INT     |          | Same as year_from (single vehicle)             |
-| `engine_name`               | STRING  | ✓        | Variant name, e.g. "GTE" or "7R"               |
-| `engine_ccm`                | INT     |          | Displacement in ccm                            |
-| `power_kw`                  | INT     |          | Power in kW                                    |
-| `fuel_type`                 | STRING  | ✓        | petrol / diesel / lpg / cng / electric / hybrid |
-| `transmission`              | STRING  |          | manual / automatic                             |
-| `avg_consumption`           | FLOAT   | ✓        | l/100 km or kWh/100 km                         |
-| `min_consumption`           | FLOAT   |          | Same as avg (single vehicle)                   |
-| `max_consumption`           | FLOAT   |          | Same as avg (single vehicle)                   |
-| `sample_count`              | INT     | ✓        | Always 1 (one vehicle per row)                 |
-| `tank_count`                | INT     |          | Number of fuel-up records                      |
-| `low_confidence`            | BOOL    | ✓        | Always `True` (single vehicle)                 |
-| `source_url`                | STRING  | ✓        | Detail page URL                                |
-| `scraped_at`                | STRING  | ✓        | ISO 8601 UTC timestamp                         |
-| `first_seen_at`             | STRING  | ✓        | When record was first created                  |
-| `pct_motorway`              | FLOAT   |          | % motorway driving                             |
-| `pct_city`                  | FLOAT   |          | % city driving                                 |
-| `pct_country`               | FLOAT   |          | % country road driving                         |
-| `consumption_summer`        | FLOAT   |          | Apr–Sep average l/100 km                       |
-| `consumption_winter`        | FLOAT   |          | Oct–Mar average l/100 km                       |
-| `fuel_grade_pct_premium`    | FLOAT   |          | % users using premium fuel                     |
-| `co2_g_per_km`              | FLOAT   |          | CO₂ g/km from detail page                      |
-| `fuel_cost_eur_per_100km`   | FLOAT   |          | Fuel cost EUR/100 km from detail page          |
-| `histogram_buckets`         | STRING  |          | JSON distribution (if available)               |
+| `id` | STRING | ✓ | Vehicle detail page ID (e.g. `"1583120"`) |
+| `make_id` | INT | ✓ | Spritmonitor make ID |
+| `model_id` | INT | ✓ | Spritmonitor model ID |
+| `make_name` | STRING | ✓ | e.g. "Volkswagen" |
+| `model_name` | STRING | ✓ | e.g. "Golf" |
+| `generation_years` | STRING | | e.g. "2024-2024" |
+| `year_from` | INT | | Model year from detail page |
+| `year_to` | INT | | Same as year_from (single vehicle) |
+| `engine_name` | STRING | ✓ | Variant name, e.g. "GTE" or "7R" |
+| `engine_ccm` | INT | | Displacement in ccm |
+| `power_kw` | INT | | Power in kW |
+| `fuel_type` | STRING | ✓ | petrol / diesel / lpg / cng / electric / hybrid |
+| `transmission` | STRING | | manual / automatic |
+| `avg_consumption` | FLOAT | ✓ | l/100 km or kWh/100 km |
+| `min_consumption` | FLOAT | | Same as avg (single vehicle) |
+| `max_consumption` | FLOAT | | Same as avg (single vehicle) |
+| `sample_count` | INT | ✓ | Always 1 (one vehicle per row) |
+| `tank_count` | INT | | Number of fuel-up records |
+| `low_confidence` | BOOL | ✓ | Always `True` (single vehicle) |
+| `source_url` | STRING | ✓ | Detail page URL |
+| `scraped_at` | STRING | ✓ | ISO 8601 UTC timestamp |
+| `first_seen_at` | STRING | ✓ | When record was first created |
+| `pct_motorway` | FLOAT | | % motorway driving |
+| `pct_city` | FLOAT | | % city driving |
+| `pct_country` | FLOAT | | % country road driving |
+| `consumption_summer` | FLOAT | | Apr–Sep average l/100 km |
+| `consumption_winter` | FLOAT | | Oct–Mar average l/100 km |
+| `fuel_grade_pct_premium` | FLOAT | | % users using premium fuel |
+| `co2_g_per_km` | FLOAT | | CO₂ g/km from detail page |
+| `fuel_cost_eur_per_100km` | FLOAT | | Fuel cost EUR/100 km from detail page |
+| `histogram_buckets` | STRING | | JSON distribution (if available) |
 
 Encoding: **UTF-8**. Delimiter: **comma**. Decimal separator: **dot**.
 
@@ -244,34 +263,34 @@ Encoding: **UTF-8**. Delimiter: **comma**. Decimal separator: **dot**.
 
 ### First 10 rows
 
-| id      | make_name  | model_name | engine_name        | fuel_type | avg_consumption | power_kw | year | co2_g_per_km | source_url                                           |
+| id | make_name | model_name | engine_name | fuel_type | avg_consumption | power_kw | year | co2_g_per_km | source_url |
 | ------- | ---------- | ---------- | ------------------ | --------- | --------------- | -------- | ---- | ------------ | ---------------------------------------------------- |
-| 892020  | Volkswagen | Golf       | 7R                 | petrol    | 0.24            | 221      |      |              | https://www.spritmonitor.de/en/detail/892020.html     |
-| 818245  | Volkswagen | Golf       | GTI                | petrol    | 0.25            | 250      |      |              | https://www.spritmonitor.de/en/detail/818245.html     |
-| 1583120 | Volkswagen | Golf       | GTE                | hybrid    | 0.37            | 200      | 2024 | 9.0          | https://www.spritmonitor.de/en/detail/1583120.html    |
-| 1193973 | Volkswagen | Golf       | GTE                | hybrid    | 0.62            | 149      |      |              | https://www.spritmonitor.de/en/detail/1193973.html    |
-| 1274496 | Volkswagen | Golf       | GTE                | hybrid    | 0.63            | 110      |      |              | https://www.spritmonitor.de/en/detail/1274496.html    |
-| 1221699 | Volkswagen | Golf       | Golf 7 R Facalift  | petrol    | 0.80            | 228      |      |              | https://www.spritmonitor.de/en/detail/1221699.html    |
-| 1622618 | Volkswagen | Golf       | 8 GTE              | hybrid    | 0.83            | 180      |      |              | https://www.spritmonitor.de/en/detail/1622618.html    |
-| 1614893 | Volkswagen | Golf       | GTE 2025           | hybrid    | 0.86            | 200      |      |              | https://www.spritmonitor.de/en/detail/1614893.html    |
-| 1191550 | Volkswagen | Golf       | egolf              | electric  | 0.88            | 74       |      |              | https://www.spritmonitor.de/en/detail/1191550.html    |
-| 1213240 | Volkswagen | Golf       | Style ehybrid      | hybrid    | 0.89            | 150      |      |              | https://www.spritmonitor.de/en/detail/1213240.html    |
+| 892020 | Volkswagen | Golf | 7R | petrol | 0.24 | 221 | | | https://www.spritmonitor.de/en/detail/892020.html |
+| 818245 | Volkswagen | Golf | GTI | petrol | 0.25 | 250 | | | https://www.spritmonitor.de/en/detail/818245.html |
+| 1583120 | Volkswagen | Golf | GTE | hybrid | 0.37 | 200 | 2024 | 9.0 | https://www.spritmonitor.de/en/detail/1583120.html |
+| 1193973 | Volkswagen | Golf | GTE | hybrid | 0.62 | 149 | | | https://www.spritmonitor.de/en/detail/1193973.html |
+| 1274496 | Volkswagen | Golf | GTE | hybrid | 0.63 | 110 | | | https://www.spritmonitor.de/en/detail/1274496.html |
+| 1221699 | Volkswagen | Golf | Golf 7 R Facalift | petrol | 0.80 | 228 | | | https://www.spritmonitor.de/en/detail/1221699.html |
+| 1622618 | Volkswagen | Golf | 8 GTE | hybrid | 0.83 | 180 | | | https://www.spritmonitor.de/en/detail/1622618.html |
+| 1614893 | Volkswagen | Golf | GTE 2025 | hybrid | 0.86 | 200 | | | https://www.spritmonitor.de/en/detail/1614893.html |
+| 1191550 | Volkswagen | Golf | egolf | electric | 0.88 | 74 | | | https://www.spritmonitor.de/en/detail/1191550.html |
+| 1213240 | Volkswagen | Golf | Style ehybrid | hybrid | 0.89 | 150 | | | https://www.spritmonitor.de/en/detail/1213240.html |
 
 ### Summary statistics (single make+model run)
 
 ```
-Total records:       ~150 per model (one per vehicle)
-Number of makes:     ~361 available on site
-Number of models:    ~51 per major make (e.g. Volkswagen)
-Each record:         one vehicle, low_confidence = True
+Total records:         ~150 per model (one per vehicle)
+Number of makes:       ~361 available on site
+Number of models:      ~51 per major make (e.g. Volkswagen)
+Each record:           one vehicle, low_confidence = True
 ```
 
 ### After a full import
 
 ```
-Total records:       50,000+ (one per vehicle across all makes/models)
-Number of makes:     ~361
-Number of models:    ~5,000+
+Total records:         50,000+ (one per vehicle across all makes/models)
+Number of makes:       ~361
+Number of models:      ~5,000+
 ```
 
 ---
@@ -306,9 +325,10 @@ automatically. Do not circumvent this — contact the site operator.
 
 ### HTTP 429 (rate limit)
 
-The scraper waits 10 minutes automatically and retries. If this happens
-frequently, increase `REQUEST_DELAY_MIN` and `REQUEST_DELAY_MAX` in
-`.env`.
+The scraper stops and waits 10 minutes automatically before retrying. If this
+happens frequently, increase `REQUEST_DELAY_MIN` in `.env` (e.g. from `2.0` to
+`3.0`). You can also reduce the jitter range by lowering `REQUEST_DELAY_JITTER`
+(e.g. from `1.0` to `0.5` for a tighter 2.5–3.5s window).
 
 ### Scraper interrupted / crashed
 
@@ -322,9 +342,10 @@ python main.py --mode full    # continues from progress.json
 ### Scraper is slow
 
 This is by design. Each vehicle requires 2–4 HTTP requests (detail page
-\+ cdetail expansions), and we wait 1–3 seconds between requests to be
-respectful. For a model with 150 vehicles across 10 list pages, expect
-~10 minutes per model.
+\+ cdetail expansions), and we wait 2 seconds (±1s jitter) between
+requests to be respectful to the community-run Spritmonitor site. For a
+model with 150 vehicles across 10 list pages, expect ~10–15 minutes per
+model.
 
 To speed up testing, use `--mode model` with a specific model:
 
@@ -377,7 +398,7 @@ spritmonitor-scraper/
 ├── scraper/
 │   ├── __init__.py
 │   ├── config.py            # Central configuration
-│   ├── http_client.py       # HTTP with cache, rate-limit, retry
+│   ├── http_client.py       # HTTP with cache, rate-limit (2s ± 1s jitter), retry
 │   ├── parser.py            # HTML parsers (makes, models, vehicles,
 │   │                        #   detail pages, cdetail expansions)
 │   ├── spider.py            # Scraping orchestration (4 modes)
