@@ -191,7 +191,7 @@ def parse_models_ajax(
             mid = int(raw_id)
         except ValueError:
             continue
-        if mid <= 0 or mid in seen_ids or not raw_name:
+        if mid < 0 or mid in seen_ids or not raw_name:
             continue
         seen_ids.add(mid)
         parsed_any = True
@@ -212,7 +212,7 @@ def parse_models_ajax(
                 mid = int(val)
             except (ValueError, TypeError):
                 continue
-            if mid <= 0 or mid in seen_ids:
+            if mid < 0 or mid in seen_ids:
                 continue
             name = opt.get_text(strip=True)
             if not name:
