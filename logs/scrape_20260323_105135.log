@@ -1,0 +1,139 @@
+2026-03-23 10:51:35,823 [INFO] root: Log file: logs/scrape_20260323_105135.log
+2026-03-23 10:51:35,823 [INFO] root: Spritmonitor.de Scraper starting …
+2026-03-23 10:51:35,823 [INFO] root: Mode: model
+2026-03-23 10:51:35,824 [INFO] root: Config: delay=2.0–3.0s, cache_ttl=7d, max_pages=50
+2026-03-23 10:51:35,824 [INFO] scraper.progress: Resumed progress: 5 makes, 1 models completed.
+2026-03-23 10:51:35,824 [INFO] scraper.spider: ============================================================
+2026-03-23 10:51:35,824 [INFO] scraper.spider: MODE: model (make=Ford, model=Falcon, make_id=None)
+2026-03-23 10:51:35,824 [INFO] scraper.spider: ============================================================
+2026-03-23 10:51:35,826 [INFO] scraper.http_client: GET https://www.spritmonitor.de/en/  (attempt 1/3)
+2026-03-23 10:51:35,834 [DEBUG] urllib3.connectionpool: Starting new HTTPS connection (1): www.spritmonitor.de:443
+2026-03-23 10:51:36,379 [DEBUG] urllib3.connectionpool: https://www.spritmonitor.de:443 "GET /en/ HTTP/1.1" 200 None
+2026-03-23 10:51:36,408 [INFO] scraper.parser: Parsed 361 makes from page.
+2026-03-23 10:51:36,409 [INFO] scraper.spider: Processing make: Ford (id=17)
+2026-03-23 10:51:36,409 [DEBUG] scraper.http_client: Rate-limit sleep 1.0s
+2026-03-23 10:51:37,406 [INFO] scraper.http_client: GET https://www.spritmonitor.de/en/ajaxModel.action?manuf=17&allowempty=false  (attempt 1/3)
+2026-03-23 10:51:37,521 [DEBUG] urllib3.connectionpool: https://www.spritmonitor.de:443 "GET /en/ajaxModel.action?manuf=17&allowempty=false HTTP/1.1" 200 None
+2026-03-23 10:51:37,522 [INFO] scraper.parser: Parsed 46 models for make_id=17 via AJAX.
+2026-03-23 10:51:37,522 [INFO] scraper.spider:   Model: Falcon (id=1223)
+2026-03-23 10:51:37,522 [DEBUG] scraper.http_client: Rate-limit sleep 1.8s
+2026-03-23 10:51:39,360 [INFO] scraper.http_client: GET https://www.spritmonitor.de/en/overview/17-Ford/1223-Falcon.html  (attempt 1/3)
+2026-03-23 10:51:39,498 [DEBUG] urllib3.connectionpool: https://www.spritmonitor.de:443 "GET /en/overview/17-Ford/1223-Falcon.html HTTP/1.1" 200 None
+2026-03-23 10:51:39,531 [DEBUG] scraper.parser: Parsed 15 vehicle entries from searchresults table.
+2026-03-23 10:51:39,562 [INFO] scraper.spider:     15 unique vehicles found for Ford Falcon — fetching details …
+2026-03-23 10:51:39,563 [DEBUG] scraper.http_client: Rate-limit sleep 1.6s
+2026-03-23 10:51:41,192 [INFO] scraper.http_client: GET https://www.spritmonitor.de/en/detail/694938.html  (attempt 1/3)
+2026-03-23 10:51:41,341 [DEBUG] urllib3.connectionpool: https://www.spritmonitor.de:443 "GET /en/detail/694938.html HTTP/1.1" 200 None
+2026-03-23 10:51:41,362 [DEBUG] scraper.parser: Parsed vehicle detail 694938: 1 fuel sections, 1 cdetail links.
+2026-03-23 10:51:41,362 [DEBUG] scraper.http_client: Rate-limit sleep 2.8s
+2026-03-23 10:51:44,205 [INFO] scraper.http_client: GET https://www.spritmonitor.de/en/detail/694938.html?cdetail=1  (attempt 1/3)
+2026-03-23 10:51:44,362 [DEBUG] urllib3.connectionpool: https://www.spritmonitor.de:443 "GET /en/detail/694938.html?cdetail=1 HTTP/1.1" 200 None
+2026-03-23 10:51:44,383 [DEBUG] scraper.http_client: Rate-limit sleep 1.8s
+2026-03-23 10:51:46,158 [INFO] scraper.http_client: GET https://www.spritmonitor.de/en/detail/746426.html  (attempt 1/3)
+2026-03-23 10:51:46,299 [DEBUG] urllib3.connectionpool: https://www.spritmonitor.de:443 "GET /en/detail/746426.html HTTP/1.1" 200 None
+2026-03-23 10:51:46,356 [DEBUG] scraper.parser: Parsed vehicle detail 746426: 1 fuel sections, 1 cdetail links.
+2026-03-23 10:51:46,356 [DEBUG] scraper.http_client: Rate-limit sleep 0.9s
+2026-03-23 10:51:47,301 [INFO] scraper.http_client: GET https://www.spritmonitor.de/en/detail/746426.html?cdetail=1  (attempt 1/3)
+2026-03-23 10:51:47,440 [DEBUG] urllib3.connectionpool: https://www.spritmonitor.de:443 "GET /en/detail/746426.html?cdetail=1 HTTP/1.1" 200 None
+2026-03-23 10:51:47,468 [DEBUG] scraper.http_client: Rate-limit sleep 2.7s
+2026-03-23 10:51:50,140 [INFO] scraper.http_client: GET https://www.spritmonitor.de/en/detail/752211.html  (attempt 1/3)
+2026-03-23 10:51:50,280 [DEBUG] urllib3.connectionpool: https://www.spritmonitor.de:443 "GET /en/detail/752211.html HTTP/1.1" 200 None
+2026-03-23 10:51:50,309 [DEBUG] scraper.parser: Parsed vehicle detail 752211: 1 fuel sections, 1 cdetail links.
+2026-03-23 10:51:50,309 [DEBUG] scraper.http_client: Rate-limit sleep 2.4s
+2026-03-23 10:51:52,706 [INFO] scraper.http_client: GET https://www.spritmonitor.de/en/detail/752211.html?cdetail=1  (attempt 1/3)
+2026-03-23 10:51:52,870 [DEBUG] urllib3.connectionpool: https://www.spritmonitor.de:443 "GET /en/detail/752211.html?cdetail=1 HTTP/1.1" 200 None
+2026-03-23 10:51:52,893 [DEBUG] scraper.http_client: Rate-limit sleep 1.9s
+2026-03-23 10:51:54,807 [INFO] scraper.http_client: GET https://www.spritmonitor.de/en/detail/778708.html  (attempt 1/3)
+2026-03-23 10:51:54,960 [DEBUG] urllib3.connectionpool: https://www.spritmonitor.de:443 "GET /en/detail/778708.html HTTP/1.1" 200 None
+2026-03-23 10:51:54,991 [DEBUG] scraper.parser: Parsed vehicle detail 778708: 1 fuel sections, 1 cdetail links.
+2026-03-23 10:51:54,991 [DEBUG] scraper.http_client: Rate-limit sleep 1.5s
+2026-03-23 10:51:56,472 [INFO] scraper.http_client: GET https://www.spritmonitor.de/en/detail/778708.html?cdetail=1  (attempt 1/3)
+2026-03-23 10:51:56,827 [DEBUG] urllib3.connectionpool: https://www.spritmonitor.de:443 "GET /en/detail/778708.html?cdetail=1 HTTP/1.1" 200 None
+2026-03-23 10:51:56,853 [DEBUG] scraper.http_client: Rate-limit sleep 2.9s
+2026-03-23 10:51:59,796 [INFO] scraper.http_client: GET https://www.spritmonitor.de/en/detail/972643.html  (attempt 1/3)
+2026-03-23 10:51:59,976 [DEBUG] urllib3.connectionpool: https://www.spritmonitor.de:443 "GET /en/detail/972643.html HTTP/1.1" 200 None
+2026-03-23 10:52:00,029 [DEBUG] scraper.parser: Parsed vehicle detail 972643: 1 fuel sections, 1 cdetail links.
+2026-03-23 10:52:00,029 [DEBUG] scraper.http_client: Rate-limit sleep 2.7s
+2026-03-23 10:52:02,757 [INFO] scraper.http_client: GET https://www.spritmonitor.de/en/detail/972643.html?cdetail=1  (attempt 1/3)
+2026-03-23 10:52:02,914 [DEBUG] urllib3.connectionpool: https://www.spritmonitor.de:443 "GET /en/detail/972643.html?cdetail=1 HTTP/1.1" 200 None
+2026-03-23 10:52:02,948 [DEBUG] scraper.http_client: Rate-limit sleep 2.1s
+2026-03-23 10:52:05,019 [INFO] scraper.http_client: GET https://www.spritmonitor.de/en/detail/548667.html  (attempt 1/3)
+2026-03-23 10:52:05,169 [DEBUG] urllib3.connectionpool: https://www.spritmonitor.de:443 "GET /en/detail/548667.html HTTP/1.1" 200 None
+2026-03-23 10:52:05,201 [DEBUG] scraper.parser: Parsed vehicle detail 548667: 1 fuel sections, 1 cdetail links.
+2026-03-23 10:52:05,201 [DEBUG] scraper.http_client: Rate-limit sleep 1.3s
+2026-03-23 10:52:06,462 [INFO] scraper.http_client: GET https://www.spritmonitor.de/en/detail/548667.html?cdetail=1  (attempt 1/3)
+2026-03-23 10:52:06,643 [DEBUG] urllib3.connectionpool: https://www.spritmonitor.de:443 "GET /en/detail/548667.html?cdetail=1 HTTP/1.1" 200 None
+2026-03-23 10:52:06,672 [DEBUG] scraper.http_client: Rate-limit sleep 1.4s
+2026-03-23 10:52:08,069 [INFO] scraper.http_client: GET https://www.spritmonitor.de/en/detail/352207.html  (attempt 1/3)
+2026-03-23 10:52:08,220 [DEBUG] urllib3.connectionpool: https://www.spritmonitor.de:443 "GET /en/detail/352207.html HTTP/1.1" 200 None
+2026-03-23 10:52:08,246 [DEBUG] scraper.parser: Parsed vehicle detail 352207: 1 fuel sections, 1 cdetail links.
+2026-03-23 10:52:08,246 [DEBUG] scraper.http_client: Rate-limit sleep 2.2s
+2026-03-23 10:52:10,452 [INFO] scraper.http_client: GET https://www.spritmonitor.de/en/detail/352207.html?cdetail=1  (attempt 1/3)
+2026-03-23 10:52:10,613 [DEBUG] urllib3.connectionpool: https://www.spritmonitor.de:443 "GET /en/detail/352207.html?cdetail=1 HTTP/1.1" 200 None
+2026-03-23 10:52:10,659 [DEBUG] scraper.http_client: Rate-limit sleep 1.7s
+2026-03-23 10:52:12,317 [INFO] scraper.http_client: GET https://www.spritmonitor.de/en/detail/508241.html  (attempt 1/3)
+2026-03-23 10:52:12,461 [DEBUG] urllib3.connectionpool: https://www.spritmonitor.de:443 "GET /en/detail/508241.html HTTP/1.1" 200 None
+2026-03-23 10:52:12,478 [DEBUG] scraper.parser: Parsed vehicle detail 508241: 1 fuel sections, 1 cdetail links.
+2026-03-23 10:52:12,478 [DEBUG] scraper.http_client: Rate-limit sleep 1.4s
+2026-03-23 10:52:13,837 [INFO] scraper.http_client: GET https://www.spritmonitor.de/en/detail/508241.html?cdetail=1  (attempt 1/3)
+2026-03-23 10:52:13,987 [DEBUG] urllib3.connectionpool: https://www.spritmonitor.de:443 "GET /en/detail/508241.html?cdetail=1 HTTP/1.1" 200 None
+2026-03-23 10:52:14,009 [DEBUG] scraper.http_client: Rate-limit sleep 2.0s
+2026-03-23 10:52:15,988 [INFO] scraper.http_client: GET https://www.spritmonitor.de/en/detail/460832.html  (attempt 1/3)
+2026-03-23 10:52:16,156 [DEBUG] urllib3.connectionpool: https://www.spritmonitor.de:443 "GET /en/detail/460832.html HTTP/1.1" 200 None
+2026-03-23 10:52:16,188 [DEBUG] scraper.parser: Parsed vehicle detail 460832: 1 fuel sections, 1 cdetail links.
+2026-03-23 10:52:16,189 [DEBUG] scraper.http_client: Rate-limit sleep 1.1s
+2026-03-23 10:52:17,244 [INFO] scraper.http_client: GET https://www.spritmonitor.de/en/detail/460832.html?cdetail=1  (attempt 1/3)
+2026-03-23 10:52:17,689 [DEBUG] urllib3.connectionpool: https://www.spritmonitor.de:443 "GET /en/detail/460832.html?cdetail=1 HTTP/1.1" 200 None
+2026-03-23 10:52:17,722 [DEBUG] scraper.http_client: Rate-limit sleep 2.2s
+2026-03-23 10:52:19,969 [INFO] scraper.http_client: GET https://www.spritmonitor.de/en/detail/841715.html  (attempt 1/3)
+2026-03-23 10:52:20,123 [DEBUG] urllib3.connectionpool: https://www.spritmonitor.de:443 "GET /en/detail/841715.html HTTP/1.1" 200 None
+2026-03-23 10:52:20,153 [DEBUG] scraper.parser: Parsed vehicle detail 841715: 1 fuel sections, 1 cdetail links.
+2026-03-23 10:52:20,153 [DEBUG] scraper.http_client: Rate-limit sleep 2.8s
+2026-03-23 10:52:22,978 [INFO] scraper.http_client: GET https://www.spritmonitor.de/en/detail/841715.html?cdetail=1  (attempt 1/3)
+2026-03-23 10:52:23,269 [DEBUG] urllib3.connectionpool: https://www.spritmonitor.de:443 "GET /en/detail/841715.html?cdetail=1 HTTP/1.1" 200 None
+2026-03-23 10:52:23,332 [DEBUG] scraper.http_client: Rate-limit sleep 2.4s
+2026-03-23 10:52:25,727 [INFO] scraper.http_client: GET https://www.spritmonitor.de/en/detail/609887.html  (attempt 1/3)
+2026-03-23 10:52:25,860 [DEBUG] urllib3.connectionpool: https://www.spritmonitor.de:443 "GET /en/detail/609887.html HTTP/1.1" 200 None
+2026-03-23 10:52:25,878 [DEBUG] scraper.parser: Parsed vehicle detail 609887: 1 fuel sections, 1 cdetail links.
+2026-03-23 10:52:25,878 [DEBUG] scraper.http_client: Rate-limit sleep 2.5s
+2026-03-23 10:52:28,353 [INFO] scraper.http_client: GET https://www.spritmonitor.de/en/detail/609887.html?cdetail=1  (attempt 1/3)
+2026-03-23 10:52:28,489 [DEBUG] urllib3.connectionpool: https://www.spritmonitor.de:443 "GET /en/detail/609887.html?cdetail=1 HTTP/1.1" 200 None
+2026-03-23 10:52:28,509 [DEBUG] scraper.http_client: Rate-limit sleep 1.2s
+2026-03-23 10:52:29,740 [INFO] scraper.http_client: GET https://www.spritmonitor.de/en/detail/507314.html  (attempt 1/3)
+2026-03-23 10:52:29,876 [DEBUG] urllib3.connectionpool: https://www.spritmonitor.de:443 "GET /en/detail/507314.html HTTP/1.1" 200 None
+2026-03-23 10:52:29,976 [DEBUG] scraper.parser: Parsed vehicle detail 507314: 1 fuel sections, 1 cdetail links.
+2026-03-23 10:52:29,977 [DEBUG] scraper.http_client: Rate-limit sleep 1.4s
+2026-03-23 10:52:31,404 [INFO] scraper.http_client: GET https://www.spritmonitor.de/en/detail/507314.html?cdetail=1  (attempt 1/3)
+2026-03-23 10:52:31,542 [DEBUG] urllib3.connectionpool: https://www.spritmonitor.de:443 "GET /en/detail/507314.html?cdetail=1 HTTP/1.1" 200 None
+2026-03-23 10:52:31,567 [DEBUG] scraper.http_client: Rate-limit sleep 3.0s
+2026-03-23 10:52:34,519 [INFO] scraper.http_client: GET https://www.spritmonitor.de/en/detail/1642515.html  (attempt 1/3)
+2026-03-23 10:52:34,656 [DEBUG] urllib3.connectionpool: https://www.spritmonitor.de:443 "GET /en/detail/1642515.html HTTP/1.1" 200 None
+2026-03-23 10:52:34,678 [DEBUG] scraper.parser: Parsed vehicle detail 1642515: 1 fuel sections, 1 cdetail links.
+2026-03-23 10:52:34,679 [DEBUG] scraper.http_client: Rate-limit sleep 2.1s
+2026-03-23 10:52:36,807 [INFO] scraper.http_client: GET https://www.spritmonitor.de/en/detail/1642515.html?cdetail=1  (attempt 1/3)
+2026-03-23 10:52:36,954 [DEBUG] urllib3.connectionpool: https://www.spritmonitor.de:443 "GET /en/detail/1642515.html?cdetail=1 HTTP/1.1" 200 None
+2026-03-23 10:52:36,977 [DEBUG] scraper.http_client: Rate-limit sleep 2.3s
+2026-03-23 10:52:39,274 [INFO] scraper.http_client: GET https://www.spritmonitor.de/en/detail/1413345.html  (attempt 1/3)
+2026-03-23 10:52:39,948 [DEBUG] urllib3.connectionpool: https://www.spritmonitor.de:443 "GET /en/detail/1413345.html HTTP/1.1" 200 None
+2026-03-23 10:52:39,982 [DEBUG] scraper.parser: Parsed vehicle detail 1413345: 1 fuel sections, 1 cdetail links.
+2026-03-23 10:52:39,982 [DEBUG] scraper.http_client: Rate-limit sleep 2.0s
+2026-03-23 10:52:42,007 [INFO] scraper.http_client: GET https://www.spritmonitor.de/en/detail/1413345.html?cdetail=1  (attempt 1/3)
+2026-03-23 10:52:42,191 [DEBUG] urllib3.connectionpool: https://www.spritmonitor.de:443 "GET /en/detail/1413345.html?cdetail=1 HTTP/1.1" 200 None
+2026-03-23 10:52:42,247 [DEBUG] scraper.http_client: Rate-limit sleep 2.6s
+2026-03-23 10:52:44,826 [INFO] scraper.http_client: GET https://www.spritmonitor.de/en/detail/860612.html  (attempt 1/3)
+2026-03-23 10:52:44,987 [DEBUG] urllib3.connectionpool: https://www.spritmonitor.de:443 "GET /en/detail/860612.html HTTP/1.1" 200 None
+2026-03-23 10:52:45,019 [DEBUG] scraper.parser: Parsed vehicle detail 860612: 1 fuel sections, 1 cdetail links.
+2026-03-23 10:52:45,019 [DEBUG] scraper.http_client: Rate-limit sleep 1.6s
+2026-03-23 10:52:46,651 [INFO] scraper.http_client: GET https://www.spritmonitor.de/en/detail/860612.html?cdetail=1  (attempt 1/3)
+2026-03-23 10:52:46,830 [DEBUG] urllib3.connectionpool: https://www.spritmonitor.de:443 "GET /en/detail/860612.html?cdetail=1 HTTP/1.1" 200 None
+2026-03-23 10:52:46,881 [INFO] scraper.spider:     Done with Ford Falcon.
+2026-03-23 10:52:46,881 [INFO] scraper.storage: Saving 15 records to output files …
+2026-03-23 10:52:46,883 [INFO] scraper.storage: CSV:  output/spritmonitor_model_20260323.csv  (15 rows)
+2026-03-23 10:52:46,884 [INFO] scraper.storage: JSON: output/spritmonitor_model_20260323.json
+2026-03-23 10:52:46,884 [INFO] scraper.spider: ============================================================
+2026-03-23 10:52:46,884 [INFO] scraper.spider: SCRAPING COMPLETE
+2026-03-23 10:52:46,884 [INFO] scraper.spider:   Total records:  15
+2026-03-23 10:52:46,884 [INFO] scraper.spider:   HTTP requests:  33
+2026-03-23 10:52:46,884 [INFO] scraper.spider:   Elapsed time:   1.2 minutes
+2026-03-23 10:52:46,884 [INFO] scraper.spider:   Progress stats: {'completed_makes': [226, 213, 178, 270, 77], 'completed_models': ['226_0'], 'current_make': 'Adly', 'current_model': None, 'total_makes': 361, 'total_models': 1, 'total_records': 165, 'errors': 0}
+2026-03-23 10:52:46,884 [INFO] scraper.spider: ============================================================
